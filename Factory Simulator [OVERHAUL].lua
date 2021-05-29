@@ -203,9 +203,9 @@ while wait() do
 							wait(.5)
 							game:GetService("ReplicatedStorage").Events.Inventory.PickUp:FireServer(Pickitup)
 							wait(.5)
+							local Carried = LP.Character:FindFirstChild("CarriedItem")
 							--// Auto sell harvested items when at capacity at selected Sellzone.
 							if AutoSell and Sellzone then
-								local Carried = LP.Character:FindFirstChild("CarriedItem")
 								if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
 									LP.Character:MoveTo(Sellzone:FindFirstChildWhichIsA("BasePart").Position)
 									wait(.5)
@@ -215,7 +215,6 @@ while wait() do
 							end
 							--// Auto store harvested resource in selected container.
 							if AutoStore and Container then
-								local Carried = LP.Character:FindFirstChild("CarriedItem")
 								if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
 									LP.Character:MoveTo(Container:FindFirstChildWhichIsA("BasePart").Position)
 									wait(.5)
