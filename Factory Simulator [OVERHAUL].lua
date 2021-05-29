@@ -40,7 +40,7 @@ for _,Grids in pairs(workspace.Grids:GetDescendants()) do
 	end
 end
 
---// Material Lua Gui Library // Made By: Twink Marie
+--// MaterialLua UI Library // Made By: Twink Marie
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
 
 local X = Material.Load({
@@ -123,7 +123,15 @@ local G = Y.Toggle({
 	Enabled = true
 })
 
-local H = Y.Dropdown({
+local H = Y.Button({
+	Text = "Teleport Home",
+	Callback = function(Value)
+		LP.Character:MoveTo(MyGrid.GridBase.Position)
+	end,
+	Enabled = true
+})
+
+local I = Y.Dropdown({
 	Text = "Resource:",
 	Callback = function(Value)
 		Target = Value
@@ -194,10 +202,10 @@ while wait() do
 				LP.Character:MoveTo(CutPosition)
 				wait(.25)
 				if LP:DistanceFromCharacter(CutPosition) <= 30 then
-					local Pick = true
 					ReplicatedStorage.Events.Harvest.Harvest:FireServer(Cut)
 					wait(.25)
 					--// Auto pickup when near. You can only carry one type of item and only 15 of that type. (Vehicles hold more but this is not currently set up to use them)
+					local Pick = true
 					if AutoPickup then
 						for _, Pickitup in pairs(MyGrid.Entities:GetChildren()) do
 							if Pickitup:IsA("BasePart") and LP:DistanceFromCharacter(Pickitup.Position) <= 30 and Pick then
@@ -205,21 +213,17 @@ while wait() do
 								ReplicatedStorage.Events.Inventory.PickUp:FireServer(Pickitup)
 								wait(.25)
 								--// Auto sell harvested items when at capacity at selected Sellzone.
-								if AutoSell and Sellzone then
-									local Carried = LP.Character:FindFirstChild("CarriedItem")
-									if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
-										Pick = false
+								local Carried = LP.Character:FindFirstChild("CarriedItem")
+								if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
+									Pick = false
+									if AutoSell and Sellzone then
 										LP.Character:MoveTo(Sellzone:FindFirstChildWhichIsA("BasePart").Position)
 										wait(.25)
 										ReplicatedStorage.Events.Inventory.PickUp:FireServer(Carried.Handle)
 										wait(.25)
 									end
-								end
-								--// Auto store harvested resource in selected container.
-								if AutoStore and Container then
-									local Carried = LP.Character:FindFirstChild("CarriedItem")
-									if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
-										Pick = false
+									--// Auto store harvested resource in selected container.
+									if AutoStore and Container then
 										LP.Character:MoveTo(Container:FindFirstChildWhichIsA("BasePart").Position)
 										wait(.25)
 										ReplicatedStorage.Events.Inventory.ContainerInteraction:FireServer(Container)
