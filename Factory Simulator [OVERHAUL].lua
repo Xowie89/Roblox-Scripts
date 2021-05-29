@@ -22,9 +22,10 @@ local Container = false
 local Sellzone = false
 local SelectContainerToggle = false
 local SelectSellzoneToggle = false
+local LP = game.Players.LocalPlayer
 
 --// Selection Boxes
-local PM = game.Players.LocalPlayer:GetMouse()
+local PM = LP:GetMouse()
 local ContainerSelectionBox = Instance.new("SelectionBox")
 ContainerSelectionBox.LineThickness = .25
 ContainerSelectionBox.Color3 = Color3.new(1,0,0)
@@ -33,7 +34,7 @@ local SellzoneSelectionBox = ContainerSelectionBox:Clone()
 --// Find our grid
 local MyGrid
 for _,Grids in pairs(workspace.Grids:GetDescendants()) do
-	if Grids.Name == "Owner" and Grids.Value == game.Players.LocalPlayer then
+	if Grids.Name == "Owner" and Grids.Value == LP then
 		MyGrid = Grids.Parent
 	end
 end
@@ -183,45 +184,43 @@ game:GetService("Players").LocalPlayer.Idled:Connect(function()
 end)
 
 --// Main script
-while true do
-	wait()
+while wait() do
 	pcall(function()
 		--// Auto harvest when near.
-		for _,Cut in pairs(workspace.Harvestable:GetDescendants()) do
+		for _, Cut in pairs(workspace.Harvestable:GetDescendants()) do
 			if Running and Cut:IsA("Model") and Cut.Name == Target and Cut.Parent.Parent.Name == "Harvestable" then
-				game.Players.LocalPlayer.Character:MoveTo(Cut:FindFirstChildWhichIsA("BasePart").Position)
+				local CutPositon = Cut:FindFirstChildWhichIsA("BasePart").Position
+				LP.Character:MoveTo(CutPosition)
 				wait(.5)
-				if game.Players.LocalPlayer:DistanceFromCharacter(Cut:FindFirstChildWhichIsA("BasePart").Position) <= 30 then
+				if LP:DistanceFromCharacter(CutPosition) <= 30 then
 					game:GetService("ReplicatedStorage").Events.Harvest.Harvest:FireServer(Cut)
 					wait(.5)
 				end
 				--// Auto pickup when near. You can only carry one type of item and only 15 of that type. (Vehicles hold more but this is not currently set up to use them)
 				if AutoPickup then
-					for _,Pickitup in pairs(MyGrid.Entities:GetChildren()) do
-						if Pickitup:IsA("BasePart") then
-							if game.Players.LocalPlayer:DistanceFromCharacter(Pickitup.Position) <= 30 then
-								wait(.5)
-								game:GetService("ReplicatedStorage").Events.Inventory.PickUp:FireServer(Pickitup)
-								wait(.5)
-								--// Auto sell harvested items when at capacity at selected Sellzone.
-								if AutoSell and Sellzone then
-									local Carried = game.Players.LocalPlayer.Character:FindFirstChild("CarriedItem")
-									if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
-										game.Players.LocalPlayer.Character:MoveTo(Sellzone:FindFirstChildWhichIsA("BasePart").Position)
-										wait(.5)
-										game:GetService("ReplicatedStorage").Events.Inventory.PickUp:FireServer(Carried.Handle)
-										wait(.5)
-									end
+					for _, Pickitup in pairs(MyGrid.Entities:GetChildren()) do
+						if Pickitup:IsA("BasePart") and LP:DistanceFromCharacter(Pickitup.Position) <= 30 and LP:DistanceFromCharacter(CutPosition) <= 30 then
+							wait(.5)
+							game:GetService("ReplicatedStorage").Events.Inventory.PickUp:FireServer(Pickitup)
+							wait(.5)
+							--// Auto sell harvested items when at capacity at selected Sellzone.
+							if AutoSell and Sellzone then
+								local Carried = LP.Character:FindFirstChild("CarriedItem")
+								if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
+									LP.Character:MoveTo(Sellzone:FindFirstChildWhichIsA("BasePart").Position)
+									wait(.5)
+									game:GetService("ReplicatedStorage").Events.Inventory.PickUp:FireServer(Carried.Handle)
+									wait(.5)
 								end
-								--// Auto store harvested resource in selected container.
-								if AutoStore and Container then
-									local Carried = game.Players.LocalPlayer.Character:FindFirstChild("CarriedItem")
-									if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
-										game.Players.LocalPlayer.Character:MoveTo(Container:FindFirstChildWhichIsA("BasePart").Position)
-										wait(.5)
-										game:GetService("ReplicatedStorage").Events.Inventory.ContainerInteraction:FireServer(Container)
-										wait(.5)
-									end
+							end
+							--// Auto store harvested resource in selected container.
+							if AutoStore and Container then
+								local Carried = LP.Character:FindFirstChild("CarriedItem")
+								if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
+									LP.Character:MoveTo(Container:FindFirstChildWhichIsA("BasePart").Position)
+									wait(.5)
+									game:GetService("ReplicatedStorage").Events.Inventory.ContainerInteraction:FireServer(Container)
+									wait(.5)
 								end
 							end
 						end
