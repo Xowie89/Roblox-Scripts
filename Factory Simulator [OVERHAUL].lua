@@ -190,37 +190,40 @@ while wait() do
 		--// Auto harvest when near.
 		for _, Cut in pairs(workspace.Harvestable:GetDescendants()) do
 			if Running and Cut:IsA("Model") and Cut.Name == Target and Cut.Parent.Parent.Name == "Harvestable" then
-				local CutPositon = Cut:FindFirstChildWhichIsA("BasePart").Position
+				local CutPosition = Cut:FindFirstChildWhichIsA("BasePart").Position
 				LP.Character:MoveTo(CutPosition)
-				wait(.5)
-				if LP:DistanceFromCharacter(Cut:FindFirstChildWhichIsA("BasePart").Position) <= 30 then
+				wait(.25)
+				if LP:DistanceFromCharacter(CutPosition) <= 30 then
+					local Pick = true
 					ReplicatedStorage.Events.Harvest.Harvest:FireServer(Cut)
-					wait(.5)
+					wait(.25)
 					--// Auto pickup when near. You can only carry one type of item and only 15 of that type. (Vehicles hold more but this is not currently set up to use them)
 					if AutoPickup then
 						for _, Pickitup in pairs(MyGrid.Entities:GetChildren()) do
-							if Pickitup:IsA("BasePart") and LP:DistanceFromCharacter(Pickitup.Position) <= 30 then
-								wait(.5)
+							if Pickitup:IsA("BasePart") and LP:DistanceFromCharacter(Pickitup.Position) <= 30 and Pick then
+								wait(.25)
 								ReplicatedStorage.Events.Inventory.PickUp:FireServer(Pickitup)
-								wait(.5)
+								wait(.25)
 								--// Auto sell harvested items when at capacity at selected Sellzone.
 								if AutoSell and Sellzone then
 									local Carried = LP.Character:FindFirstChild("CarriedItem")
 									if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
+										Pick = false
 										LP.Character:MoveTo(Sellzone:FindFirstChildWhichIsA("BasePart").Position)
-										wait(.5)
+										wait(.25)
 										ReplicatedStorage.Events.Inventory.PickUp:FireServer(Carried.Handle)
-										wait(.5)
+										wait(.25)
 									end
 								end
 								--// Auto store harvested resource in selected container.
 								if AutoStore and Container then
 									local Carried = LP.Character:FindFirstChild("CarriedItem")
 									if Carried and tonumber(Carried.Handle.AmountGui.Amount.Text) >= 15 then
+										Pick = false
 										LP.Character:MoveTo(Container:FindFirstChildWhichIsA("BasePart").Position)
-										wait(.5)
+										wait(.25)
 										ReplicatedStorage.Events.Inventory.ContainerInteraction:FireServer(Container)
-										wait(.5)
+										wait(.25)
 									end
 								end
 							end
