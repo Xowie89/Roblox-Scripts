@@ -55,6 +55,14 @@ function RemoveAnnoyances()
 		end
 	end
 	
+	local F3 = Tycoon.Purchases:FindFirstChild("RooftopFloor_0")
+	if F3 then
+		local Gay8 = F3:FindFirstChild("Cash")
+		if Gay8 then
+			Gay8:Destroy()
+		end
+	end
+	
 	for _, v in pairs(Tycoon.Effects:GetChildren()) do
 		if string.match(v.Name, "Robux") then
 			v:Destroy()
