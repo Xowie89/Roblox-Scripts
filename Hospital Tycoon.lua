@@ -95,6 +95,10 @@ config = {
                 pcall(function()
 					local touch_part = v
 					firetouchinterest(Me.Character.LeftFoot, touch_part, 0)
+					wait(0.25)
+					firetouchinterest(Me.Character.LeftFoot, touch_part, 1)
+					wait(0.25)
+					firetouchinterest(Me.Character.LeftFoot, touch_part, 0)
                 end)
             end
         end,
@@ -116,7 +120,7 @@ spawn(function()
     end
 end)
 
- --// Auto Buy
+--// Auto Buy
 spawn(function()
 	while true do
 		RemoveAnnoyances()
