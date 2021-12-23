@@ -76,20 +76,28 @@ wait(1)
 config = {
     func = {
         fb1 = function(button)
-            for i,signal in next, getconnections(button.MouseButton1Click) do
+            for i, signal in next, getconnections(button.MouseButton1Click) do
                 signal:Fire()
             end
-            for i,signal in next, getconnections(button.MouseButton1Down) do
+            for i, signal in next, getconnections(button.MouseButton1Down) do
                 signal:Fire()
             end
-            for i,signal in next, getconnections(button.Activated) do
+            for i, signal in next, getconnections(button.Activated) do
                 signal:Fire()
             end
         end,
         collect_cash = function()
 			local touch_part = Tycoon.Environment.CashZone.CashArea.CashCollector
 			firetouchinterest(Me.Character.RightFoot, touch_part, getgenv().num)
-        end,        
+        end,
+		buy_all = function()
+            for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
+                pcall(function()
+					local touch_part = v
+					firetouchinterest(Me.Character.LeftFoot, touch_part, 0)
+                end)
+            end
+        end,
     }
 }
 
@@ -97,7 +105,6 @@ config = {
 spawn(function()
     while true do
         wait(1)
-		RemoveAnnoyances()
         if getgenv().num == 1 then
             wait(1)
             getgenv().num = 0
@@ -106,5 +113,14 @@ spawn(function()
             getgenv().num = 1
         end
         config.func.collect_cash()
+    end
+end)
+
+ --// Auto Buy
+spawn(function()
+	while true do
+		RemoveAnnoyances()
+		wait(1)
+        config.func.buy_all()
     end
 end)
