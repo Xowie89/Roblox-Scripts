@@ -76,8 +76,10 @@ wait(1)
 config = {
     func = {
         collect_cash = function()
-			local touch_part = Tycoon.Environment.CashZone.CashArea.CashCollector
-			game:GetService("ReplicatedStorage").RemoteFunctions.CollectCurrency:InvokeServer("Cash", touch_part)
+			pcall(function()
+				local touch_part = Tycoon.Environment.CashZone.CashArea.CashCollector
+				game:GetService("ReplicatedStorage").RemoteFunctions.CollectCurrency:InvokeServer("Cash", touch_part)
+			end)
         end,
 		buy_all = function()
             for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
@@ -88,13 +90,15 @@ config = {
             end
         end,
 		manual_drop = function()
-			local Dropper = Tycoon.Purchases:FindFirstChild("ManualDropper_0")
-			if Dropper then
-				local Prompt = Dropper.ManualDropper:FindFirstChild("InteractionPrompt")
-				if Prompt then
-					fireproximityprompt(Prompt, 1)
+			pcall(function()
+				local Dropper = Tycoon.Purchases:FindFirstChild("ManualDropper_0")
+				if Dropper then
+					local Prompt = Dropper.ManualDropper:FindFirstChild("InteractionPrompt")
+					if Prompt then
+						fireproximityprompt(Prompt, 1)
+					end
 				end
-			end
+			end)
 		end,
     }
 }
