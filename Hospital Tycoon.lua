@@ -1,10 +1,10 @@
 local Me = game.Players.LocalPlayer
 local Tycoon = nil
-local Auto_Collect = false
-local Auto_Buy = false
-local Auto_Destroy = false
-local Auto_Gather = false
-local Auto_Manual = false
+local Auto_Collect = true
+local Auto_Buy = true
+local Auto_Destroy = true
+local Auto_Gather = true
+local Auto_Manual = true
 
 for _, v in pairs(workspace.Tycoons:GetChildren()) do
 	if v.Environment.SpawnLocation.TeamColor == Me.TeamColor then
@@ -163,7 +163,11 @@ config = {
 			pcall(function()
 				for _,v in pairs(workspace.Loots:GetChildren()) do
 					wait(.1)
-					v.Detector.CFrame = Me.Character.HumanoidRootPart.CFrame
+					for _,p in pairs(v:GetChildren()) do
+						p.CanCollide = false
+						p.Anchored = true
+						p.CFrame = Me.Character.HumanoidRootPart.CFrame
+					end
 				end
 			end)
 		end,
