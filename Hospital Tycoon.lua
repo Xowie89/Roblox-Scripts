@@ -87,6 +87,15 @@ config = {
                 end)
             end
         end,
+		manual_drop = function()
+			local Dropper = Tycoon.Purchases:FindFirstChild("ManualDropper_0")
+			if Dropper then
+				local Prompt = Dropper.ManualDropper:FindFirstChild("InteractionPrompt")
+				if Prompt then
+					fireproximityprompt(Prompt, 1)
+				end
+			end
+		end,
     }
 }
 
@@ -98,4 +107,12 @@ spawn(function()
 		wait(1)
         config.func.buy_all()
     end
+end)
+
+--// Manual Dropper
+spawn(function()
+	while true do
+		wait()
+		config.func.manual_drop()
+	end
 end)
