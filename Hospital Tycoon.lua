@@ -75,55 +75,26 @@ wait(1)
 --// Configurations
 config = {
     func = {
-        fb1 = function(button)
-            for i, signal in next, getconnections(button.MouseButton1Click) do
-                signal:Fire()
-            end
-            for i, signal in next, getconnections(button.MouseButton1Down) do
-                signal:Fire()
-            end
-            for i, signal in next, getconnections(button.Activated) do
-                signal:Fire()
-            end
-        end,
         collect_cash = function()
 			local touch_part = Tycoon.Environment.CashZone.CashArea.CashCollector
-			firetouchinterest(Me.Character.RightFoot, touch_part, getgenv().num)
+			game:GetService("ReplicatedStorage").RemoteFunctions.CollectCurrency:InvokeServer("Cash", touch_part)
         end,
 		buy_all = function()
             for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
                 pcall(function()
 					local touch_part = v
-					firetouchinterest(Me.Character.LeftFoot, touch_part, 0)
-					wait(0.25)
-					firetouchinterest(Me.Character.LeftFoot, touch_part, 1)
-					wait(0.25)
-					firetouchinterest(Me.Character.LeftFoot, touch_part, 0)
+					game:GetService("ReplicatedStorage").RemoteFunctions.BuyButton:InvokeServer(touch_part.name)
                 end)
             end
         end,
     }
 }
 
---// Collect Cash
+--// Run
 spawn(function()
     while true do
-        wait(1)
-        if getgenv().num == 1 then
-            wait(1)
-            getgenv().num = 0
-        else
-            wait(1)
-            getgenv().num = 1
-        end
-        config.func.collect_cash()
-    end
-end)
-
---// Auto Buy
-spawn(function()
-	while true do
 		RemoveAnnoyances()
+        config.func.collect_cash()
 		wait(1)
         config.func.buy_all()
     end
