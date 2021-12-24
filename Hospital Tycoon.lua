@@ -162,7 +162,6 @@ config = {
 		gather_presents = function()
 			pcall(function()
 				for _,v in pairs(workspace.Loots:GetChildren()) do
-					wait(.1)
 					for _,p in pairs(v:GetChildren()) do
 						p.CanCollide = false
 						p.Anchored = true
