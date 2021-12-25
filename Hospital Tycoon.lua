@@ -1,3 +1,4 @@
+--// Variables \\--
 local Me = game.Players.LocalPlayer
 local Tycoon = false
 local Auto_Collect = true
@@ -7,8 +8,10 @@ local Auto_Gather = true
 local Auto_Manual = true
 local Auto_Rebirth = true
 
+--// MaterialLua UI Library // Made By: Twink Marie \\--
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
 
+--// Main UI \\--
 local MainGui = Material.Load({
 	Title = "Guybrush Threepwood#8178",
 	Style = 1,
@@ -17,10 +20,12 @@ local MainGui = Material.Load({
 	Theme = "Dark"
 })
 
+--// Main Page in UI \\--
 local Title_1 = MainGui.New({
 	Title = "Main"
 })
 
+--// Toggles \\--
 local Title_1_Object_1 = Title_1.Toggle({
 	Text = "Auto Collect",
 	Callback = function(Value)
@@ -71,7 +76,7 @@ local Title_1_Object_6 = Title_1.Toggle({
 
 wait(1)
 
---// Configurations
+--// Configurations \\--
 config = {
 	func = {
 		get_tycoon = function()
@@ -200,7 +205,7 @@ config = {
     }
 }
 
---// Run
+--// Run \\--
 spawn(function()
 	while true do
 		wait(1)
