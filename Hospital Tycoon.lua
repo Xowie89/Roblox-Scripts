@@ -1,21 +1,15 @@
 local Me = game.Players.LocalPlayer
-local Tycoon = nil
+local Tycoon = false
 local Auto_Collect = true
 local Auto_Buy = true
 local Auto_Destroy = true
 local Auto_Gather = true
 local Auto_Manual = true
 
-for _, v in pairs(workspace.Tycoons:GetChildren()) do
-	if v.Environment.SpawnLocation.TeamColor == Me.TeamColor then
-		Tycoon = v
-	end
-end
-
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
 
 local MainGui = Material.Load({
-	Title = "Made By: Guybrush Threepwood#8178",
+	Title = "Guybrush Threepwood#8178",
 	Style = 1,
 	SizeX = 250,
 	SizeY = 300,
@@ -70,20 +64,35 @@ wait(1)
 
 --// Configurations
 config = {
-    func = {
-        collect_cash = function()
+	func = {
+		get_tycoon = function()
+			Tycoon = false
+			for _, v in pairs(workspace.Tycoons:GetChildren()) do
+				local Env = v:FindFirstChild("Environment")
+				if Env then
+					local SL = Env:FindFirstChild("SpawnLocation")
+					if SL then
+						if SL.TeamColor == Me.TeamColor then
+							Tycoon = v
+						end
+					end
+				end
+			end
+			return Tycoon
+		end,
+		collect_cash = function()
 			pcall(function()
 				local touch_part = Tycoon.Environment.CashZone.CashArea.CashCollector
 				game:GetService("ReplicatedStorage").RemoteFunctions.CollectCurrency:InvokeServer("Cash", touch_part)
 			end)
-        end,
+		end,
 		buy_all = function()
-            for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
-                pcall(function()
+			pcall(function()
+				for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
 					game:GetService("ReplicatedStorage").RemoteFunctions.BuyButton:InvokeServer(v.name)
-                end)
-            end
-        end,
+				end
+			end)
+		end,
 		manual_drop = function()
 			pcall(function()
 				local Dropper = Tycoon.Purchases:FindFirstChild("ManualDropper_0")
@@ -177,35 +186,22 @@ config = {
 spawn(function()
 	while true do
 		wait(1)
-		if Auto_Collect then
-			config.func.collect_cash()
-		end
-	end
-end)
-
-spawn(function()
-	while true do
-		wait(1)
-		if Auto_Gather then
-			config.func.gather_presents()
-		end
-	end
-end)
-
-spawn(function()
-	while true do
-		wait(1)
-		if Auto_Buy then
-			config.func.buy_all()
-		end
-	end
-end)
-
-spawn(function()
-	while true do
-		wait(1)
-		if Auto_Destroy then
-			config.func.remove_annoyances()
+		if config.func.get_tycoon() then
+			if Auto_Collect then
+				config.func.collect_cash()
+			end
+			
+			if Auto_Destroy then
+				config.func.remove_annoyances()
+			end
+			
+			if Auto_Buy then
+				config.func.buy_all()
+			end
+			
+			if Auto_Gather then
+				config.func.gather_presents()
+			end
 		end
 	end
 end)
