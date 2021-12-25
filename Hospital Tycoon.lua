@@ -5,6 +5,7 @@ local Auto_Buy = true
 local Auto_Destroy = true
 local Auto_Gather = true
 local Auto_Manual = true
+local Auto_Rebirth = true
 
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
 
@@ -56,6 +57,14 @@ local Title_1_Object_5 = Title_1.Toggle({
 	Text = "Destroy Annoyances",
 	Callback = function(Value)
 		Auto_Destroy = Value
+	end,
+	Enabled = true
+})
+
+local Title_1_Object_6 = Title_1.Toggle({
+	Text = "Auto Rebirth",
+	Callback = function(Value)
+		Auto_Rebirth = Value
 	end,
 	Enabled = true
 })
@@ -179,6 +188,15 @@ config = {
 				end
 			end)
 		end,
+		rebirth_time = function()
+			local gg = Me.PlayerGui:FindFirstChild("GameGui")
+			if gg then
+				local rdy = gg.Screen.Middle.Rebirth.Items.Enter.Items.Ready
+				if rdy.Visible then
+					game:GetService("ReplicatedStorage").RemoteFunctions.Rebirth:InvokeServer()
+				end
+			end
+		end,
     }
 }
 
@@ -197,6 +215,10 @@ spawn(function()
 			
 			if Auto_Buy then
 				config.func.buy_all()
+			end
+			
+			if Auto_Rebirth then
+				config.func.rebirth_time()
 			end
 			
 			if Auto_Gather then
