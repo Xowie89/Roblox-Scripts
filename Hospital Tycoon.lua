@@ -102,8 +102,18 @@ config = {
 		end,
 		buy_all = function()
 			pcall(function()
+				local Money = false
 				for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
-					game:GetService("ReplicatedStorage").RemoteFunctions.BuyButton:InvokeServer(v.name)
+					if string.match(v.Name, "Dropper") or string.match(v.Name, "Upgrader") or string.match(v.Name, "Conveyor") then
+						Money = v
+					end
+				end
+				if Money then
+					game:GetService("ReplicatedStorage").RemoteFunctions.BuyButton:InvokeServer(Money.Name)
+				else
+					for _, v in pairs(Tycoon.BuyButtons:GetChildren()) do
+						game:GetService("ReplicatedStorage").RemoteFunctions.BuyButton:InvokeServer(v.name)
+					end
 				end
 			end)
 		end,
