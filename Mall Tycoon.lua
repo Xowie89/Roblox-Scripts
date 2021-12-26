@@ -95,6 +95,17 @@ wait(1)
 --// Configurations \\--
 config = {
 	func = {
+		fb1 = function(button)
+			for i,signal in next, getconnections(button.MouseButton1Click) do
+				signal:Fire()
+			end
+			for i,signal in next, getconnections(button.MouseButton1Down) do
+				signal:Fire()
+			end
+			for i,signal in next, getconnections(button.Activated) do
+				signal:Fire()
+			end
+		end,
 		collect_cash = function()
 			game:GetService("ReplicatedStorage").RemoteEvent:FireServer("RequestCollectCash")
 		end,
