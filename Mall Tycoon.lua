@@ -213,7 +213,6 @@ config = {
 					end
 				end)
 			end
-			config.func.pick_store()
 		end,
 		rebirth = function()
 			pcall(function()
