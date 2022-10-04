@@ -11,6 +11,7 @@ repeat
 until game:IsLoaded()
 
 local Players = game:GetService('Players')
+local Lighting = game:GetService('Lighting')
 local TeleportService = game:GetService('TeleportService')
 local httpservice = game:GetService('HttpService')
 local RunService = game:GetService('RunService')
@@ -26,10 +27,13 @@ local Me = Players.LocalPlayer
 local mouse = Me:GetMouse()
 
 local Noclipping = nil
+local brightLoop = nil
 local swimming = false
 local oldgrav = workspace.Gravity
 local swimbeat = nil
 local viewing = nil
+
+local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
 
 --// Settings Save/Load \\--
 
@@ -404,6 +408,10 @@ Title_4 = MainGui.New({
 	Title = "Fly"
 })
 
+Title_5 = MainGui.New({
+	Title = "Lighting"
+})
+
 --// Player \\--
 
 Title_1_Object_1 = Title_1.Toggle({
@@ -688,6 +696,82 @@ Title_4_Object_3 = Title_4.Toggle({
 			sFLY(true)
 		else
 			NOFLY()
+		end
+	end,
+	Enabled = false
+})
+
+--// Lighting \\--
+
+Title_5_Object_1 = Title_5.Button({
+	Text = "Fullbright",
+	Callback = function(Value)
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+		Lighting.FogEnd = 100000
+		Lighting.GlobalShadows = false
+		Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+	end,
+})
+
+Title_5_Object_2 = Title_5.Slider({
+	Text = "Set Time",
+	Callback = function(Value)
+		Lighting.ClockTime = Value
+	end,
+	Min = 0,
+	Max = 23,
+	Def = Lighting.ClockTime
+})
+
+Title_5_Object_3 = Title_5.Button({
+	Text = "No Fog",
+	Callback = function(Value)
+		Lighting.FogEnd = 100000
+		for i,v in pairs(Lighting:GetDescendants()) do
+			if v:IsA("Atmosphere") then
+				v:Destroy()
+			end
+		end
+	end,
+})
+
+Title_5_Object_4 = Title_5.Toggle({
+	Text = "Global Shadows",
+	Callback = function(Value)
+		Lighting.GlobalShadows = Value
+	end,
+	Enabled = Lighting.GlobalShadows
+})
+
+Title_5_Object_5 = Title_5.Button({
+	Text = "Restore Lighting",
+	Callback = function(Value)
+		Lighting.Ambient = origsettings.abt
+		Lighting.OutdoorAmbient = origsettings.oabt
+		Lighting.Brightness = origsettings.brt
+		Lighting.ClockTime = origsettings.time
+		Lighting.FogEnd = origsettings.fe
+		Lighting.FogStart = origsettings.fs
+		Lighting.GlobalShadows = origsettings.gs
+	end,
+})
+
+Title_5_Object_6 = Title_5.Toggle({
+	Text = "Fullbright Loop",
+	Callback = function(Value)
+		if Value then
+			local function brightFunc()
+				Lighting.Brightness = 2
+				Lighting.ClockTime = 14
+				Lighting.FogEnd = 100000
+				Lighting.GlobalShadows = false
+				Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+			end
+
+			brightLoop = RunService.RenderStepped:Connect(brightFunc)
+		elseif not Value and brightLoop then
+			brightLoop:Disconnect()
 		end
 	end,
 	Enabled = false
