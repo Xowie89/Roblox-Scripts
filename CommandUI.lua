@@ -27,15 +27,15 @@ local Me = Players.LocalPlayer
 local mouse = Me:GetMouse()
 
 local oldgrav = workspace.Gravity
-local loop_Tele = false
+local vehicleflyspeed = 1
+local iyflyspeed = 1
+local spinSpeed = 20
 local Held_Button = false
 local refreshCmd = false
+local loop_Tele = false
 local target = false
 local FLYING = false
 local QEfly = true
-local iyflyspeed = 1
-local vehicleflyspeed = 1
-local spinSpeed = 20
 local Noclipping = nil
 local brightLoop = nil
 local bangLoop = nil
@@ -897,8 +897,8 @@ Title_5_Object_2 = Title_5.Slider({
 	Callback = function(Value)
 		Lighting.ClockTime = Value
 	end,
-	Min = 0,
-	Max = 23,
+	Min = 1,
+	Max = 24,
 	Def = Lighting.ClockTime
 })
 
