@@ -34,6 +34,7 @@ local bangDied = nil
 local oldgrav = workspace.Gravity
 local swimbeat = nil
 local viewing = nil
+local spinSpeed = 20
 
 local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
 
@@ -610,6 +611,41 @@ Title_1_Object_6 = Title_1.Button({
 			})
 		end
 	}
+})
+
+Title_1_Object_7 = Title_4.Slider({
+	Text = "Spin Speed",
+	Callback = function(Value)
+		spinSpeed = Value
+		for i,v in pairs(getRoot(Me.Character):GetChildren()) do
+			if v.Name == "Spinning" then
+				v.AngularVelocity = Vector3.new(0,spinSpeed,0)
+			end
+		end
+	end,
+	Min = 1,
+	Max = 100,
+	Def = 20
+})
+
+Title_1_Object_8 = Title_4.Toggle({
+	Text = "Spin",
+	Callback = function(Value)
+		if Value then
+			local Spin = Instance.new("BodyAngularVelocity")
+			Spin.Name = "Spinning"
+			Spin.Parent = getRoot(Me.Character)
+			Spin.MaxTorque = Vector3.new(0, math.huge, 0)
+			Spin.AngularVelocity = Vector3.new(0,spinSpeed,0)
+		elseif not Value then
+			for i,v in pairs(getRoot(Me.Character):GetChildren()) do
+				if v.Name == "Spinning" then
+					v:Destroy()
+				end
+			end
+		end
+	end,
+	Enabled = false
 })
 
 --// Teleport \\--
