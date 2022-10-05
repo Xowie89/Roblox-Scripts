@@ -10,18 +10,19 @@ repeat
 	wait()
 until game:IsLoaded()
 
-local Players = game:GetService('Players')
-local Lighting = game:GetService('Lighting')
 local TeleportService = game:GetService('TeleportService')
+local VirtualUser = game:GetService("VirtualUser")
 local httpservice = game:GetService('HttpService')
 local RunService = game:GetService('RunService')
 local UIS = game:GetService('UserInputService')
+local Lighting = game:GetService('Lighting')
+local Players = game:GetService('Players')
 
+local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 local sethidden = sethiddenproperty or set_hidden_property or set_hidden_prop
 local gethidden = gethiddenproperty or get_hidden_property or get_hidden_prop
 local setsimulation = setsimulationradius or set_simulation_radius
-local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 
 local Me = Players.LocalPlayer
 local mouse = Me:GetMouse()
@@ -59,7 +60,6 @@ if GC then
 	end
 else
 	Me.Idled:Connect(function()
-		local VirtualUser = game:GetService("VirtualUser")
 		VirtualUser:CaptureController()
 		VirtualUser:ClickButton2(Vector2.new())
 	end)
@@ -630,7 +630,7 @@ Title_1_Object_6 = Title_1.Button({
 	}
 })
 
-Title_1_Object_7 = Title_4.Slider({
+Title_1_Object_7 = Title_1.Slider({
 	Text = "Spin Speed",
 	Callback = function(Value)
 		spinSpeed = Value
@@ -645,7 +645,7 @@ Title_1_Object_7 = Title_4.Slider({
 	Def = 20
 })
 
-Title_1_Object_8 = Title_4.Toggle({
+Title_1_Object_8 = Title_1.Toggle({
 	Text = "Spin",
 	Callback = function(Value)
 		if Value then
