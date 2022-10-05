@@ -781,7 +781,7 @@ Title_2_Object_6 = Title_2.Dropdown({
 			
 			headSit = RunService.Heartbeat:Connect(function()
 				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(Me.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(0), 0) * CFrame.new(0, 1.6, 0.4)
+					getRoot(Me.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(0), 0) * CFrame.new(0, 1.6, .5)
 				else
 					headSit:Disconnect()
 				end
