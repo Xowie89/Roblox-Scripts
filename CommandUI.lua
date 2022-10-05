@@ -26,15 +26,23 @@ local httprequest = (syn and syn.request) or (http and http.request) or http_req
 local Me = Players.LocalPlayer
 local mouse = Me:GetMouse()
 
+local oldgrav = workspace.Gravity
+local loop_Tele = false
+local Held_Button = false
+local refreshCmd = false
+local target = false
+local FLYING = false
+local QEfly = true
+local iyflyspeed = 1
+local vehicleflyspeed = 1
+local spinSpeed = 20
 local Noclipping = nil
 local brightLoop = nil
 local bangLoop = nil
 local bangAnim = nil
 local bangDied = nil
-local oldgrav = workspace.Gravity
 local swimbeat = nil
 local viewing = nil
-local spinSpeed = 20
 
 local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
 
@@ -177,9 +185,6 @@ end
 
 --// Teleporter \\--
 
-local loop_Tele = false
-local target = false
-
 function Tele(plr)
 	repeat
 		local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
@@ -209,11 +214,6 @@ function getPlayers()
 end
 
 --// Fly \\--
-
-local FLYING = false
-local QEfly = true
-local iyflyspeed = 1
-local vehicleflyspeed = 1
 
 function sFLY(vfly)
 	repeat wait() until Me and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid")
@@ -421,8 +421,6 @@ function respawn(plr)
 	plr.Character = char
 	newChar:Destroy()
 end
-
-local refreshCmd = false
 
 function refresh(plr)
 	refreshCmd = true
@@ -986,8 +984,6 @@ for _,v in pairs(getPlayers()) do
 end
 
 --// Left Control/Shift Click Teleport \\--
-
-local Held_Button = false
 
 mouse.Button1Down:Connect(function()
 	if Held_Button and getgenv().settings.click_Tele then
