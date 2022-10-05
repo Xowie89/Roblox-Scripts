@@ -669,7 +669,10 @@ Title_1_Object_9 = Title_1.Button({
 	Text = "Split",
 	Callback = function(Value)
 		if r15(Me) then
-			speaker.Character.UpperTorso.Waist:Destroy()
+			local waist = Me.Character.UpperTorso:FindFirstChild("Waist")
+			if waist then
+				waist:Destroy()
+			end
 		end
 	end,
 	Menu = {
