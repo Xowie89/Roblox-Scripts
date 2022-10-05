@@ -648,6 +648,22 @@ Title_1_Object_8 = Title_4.Toggle({
 	Enabled = false
 })
 
+Title_1_Object_9 = Title_1.Button({
+	Text = "Split",
+	Callback = function(Value)
+		if r15(Me) then
+			speaker.Character.UpperTorso.Waist:Destroy()
+		end
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Splits your character in half."
+			})
+		end
+	}
+})
+
 --// Teleport \\--
 
 Title_2_Object_1 = Title_2.Toggle({
