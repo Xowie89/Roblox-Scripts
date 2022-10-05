@@ -982,11 +982,17 @@ Title_5_Object_6 = Title_5.Toggle({
 function onPlayerAdded(plr)
 	Title_2_Object_3:SetOptions(getPlayers())
 	Title_2_Object_5:SetOptions(getPlayers())
+	Title_2_Object_6:SetOptions(getPlayers())
+	Title_4_Object_6:SetOptions(getPlayers())
+	Title_4_Object_7:SetOptions(getPlayers())
 end
 
 Players.PlayerRemoving:Connect(function(plr)
 	Title_2_Object_3:SetOptions(getPlayers())
 	Title_2_Object_5:SetOptions(getPlayers())
+	Title_2_Object_6:SetOptions(getPlayers())
+	Title_4_Object_6:SetOptions(getPlayers())
+	Title_4_Object_7:SetOptions(getPlayers())
 	
 	if viewing ~= nil and player == viewing then
 		workspace.CurrentCamera.CameraSubject = Me.Character
