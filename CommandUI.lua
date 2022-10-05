@@ -28,7 +28,9 @@ local mouse = Me:GetMouse()
 
 local Noclipping = nil
 local brightLoop = nil
-local swimming = false
+local bangLoop = nil
+local bangAnim = nil
+local bangDied = nil
 local oldgrav = workspace.Gravity
 local swimbeat = nil
 local viewing = nil
@@ -70,7 +72,7 @@ local shrink = function()
 	wait(3)
 	local suc, err = pcall(function()
 		local Hum = Me.Character:FindFirstChild("Humanoid")
-		if Hum and Hum.RigType == Enum.HumanoidRigType.R15 then
+		if Hum and r15(Me) then
 		
 			local function rm()
 				for _, v in pairs(Me.Character:GetDescendants()) do
@@ -314,11 +316,66 @@ function NOFLY()
 	pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
 end
 
+--// Bang \\--
+
+function Bang(plr)
+	Unbang()
+	wait()
+	local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
+	if tPlr then
+		bangAnim = Instance.new("Animation")
+		if not r15(Me) then
+			bangAnim.AnimationId = "rbxassetid://148840371"
+		else
+			bangAnim.AnimationId = "rbxassetid://5918726674"
+		end
+		
+		bang = Me.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(bangAnim)
+		bang:Play(.1, 1, 1)
+		bang:AdjustSpeed(3)
+		local bangplr = tPlr
+		bangDied = Me.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
+			bangLoop = bangLoop:Disconnect()
+			bang:Stop()
+			bangAnim:Destroy()
+			bangDied:Disconnect()
+		end)
+		
+		local bangOffet = CFrame.new(0, 0, 1.1)
+		bangLoop = RunService.Stepped:Connect(function()
+			pcall(function()
+				local otherRoot = getTorso(tPlr.Character)
+				getRoot(Me.Character).CFrame = otherRoot.CFrame * bangOffet
+			end)
+		end)
+	end
+end
+
+function Unbang()
+	if bangLoop then
+		bangLoop = bangLoop:Disconnect()
+		bangDied:Disconnect()
+		bang:Stop()
+		bangAnim:Destroy()
+	end
+end
+
 --// Functions \\--
 
 function getRoot(char)
 	local rootPart = char:FindFirstChild('HumanoidRootPart') or char:FindFirstChild('Torso') or char:FindFirstChild('UpperTorso')
 	return rootPart
+end
+
+function r15(plr)
+	if plr.Character:FindFirstChildOfClass('Humanoid').RigType == Enum.HumanoidRigType.R15 then
+		return true
+	end
+end
+
+function getTorso(x)
+	x = x or Players.LocalPlayer.Character
+	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
 end
 
 function onDied()
@@ -405,7 +462,7 @@ Title_3 = MainGui.New({
 })
 
 Title_4 = MainGui.New({
-	Title = "Fly"
+	Title = "Fly/Perv"
 })
 
 Title_5 = MainGui.New({
@@ -638,6 +695,30 @@ Title_2_Object_5 = Title_2.Dropdown({
 	Options = getPlayers()
 })
 
+Title_2_Object_6 = Title_2.Dropdown({
+	Text = "Headsit",
+	Callback = function(Value)
+		local plr = Value
+		local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
+		if tPlr then
+			if headSit then
+				headSit:Disconnect() 
+			end
+			
+			Me.Character:FindFirstChildOfClass('Humanoid').Sit = true
+			
+			headSit = RunService.Heartbeat:Connect(function()
+				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass('Humanoid').Sit == true then
+					getRoot(Me.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(0), 0) * CFrame.new(0, 1.6, 0.4)
+				else
+					headSit:Disconnect()
+				end
+			end)
+		end
+	end,
+	Options = getPlayers()
+})
+
 --// Server \\--
 
 Title_3_Object_1 = Title_3.Button({
@@ -660,7 +741,7 @@ Title_3_Object_2 = Title_3.Button({
 	end,
 })
 
---// Fly \\--
+--// Fly/Perv \\--
 
 Title_4_Object_1 = Title_4.Slider({
 	Text = "Fly Speed",
@@ -699,6 +780,53 @@ Title_4_Object_3 = Title_4.Toggle({
 		end
 	end,
 	Enabled = false
+})
+
+Title_4_Object_4 = Title_4.Toggle({
+	Text = "Q/E Fly",
+	Callback = function(Value)
+		QEfly = Value
+	end,
+	Enabled = QEfly
+})
+
+Title_4_Object_5 = Title_4.Button({
+	Text = "Unbang",
+	Callback = function(Value)
+		Unbang()
+	end,
+})
+
+Title_4_Object_6 = Title_4.Dropdown({
+	Text = "Bang",
+	Callback = function(Value)
+		Bang(Value)
+	end,
+	Options = getPlayers()
+})
+
+Title_4_Object_7 = Title_4.Dropdown({
+	Text = "Facesit",
+	Callback = function(Value)
+		local plr = Value
+		local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
+		if tPlr then
+			if headSit then
+				headSit:Disconnect() 
+			end
+			
+			Me.Character:FindFirstChildOfClass('Humanoid').Sit = true
+			
+			headSit = RunService.Heartbeat:Connect(function()
+				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass('Humanoid').Sit == true then
+					getRoot(Me.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(180), 0) * CFrame.new(0, 1, 1)
+				else
+					headSit:Disconnect()
+				end
+			end)
+		end
+	end,
+	Options = getPlayers()
 })
 
 --// Lighting \\--
