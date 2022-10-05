@@ -891,7 +891,7 @@ Title_4_Object_7 = Title_4.Dropdown({
 			
 			headSit = RunService.Heartbeat:Connect(function()
 				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(Me.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(180), 0) * CFrame.new(0, 1, 1)
+					getRoot(Me.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(180), 0) * CFrame.new(0, 1, .5)
 				else
 					headSit:Disconnect()
 				end
@@ -1007,7 +1007,7 @@ end)
 
 Players.PlayerAdded:Connect(onPlayerAdded)
 
-for _,v in pairs(getPlayers()) do
+for _,v in pairs(Players:GetPlayers()) do
 	onPlayerAdded(v)
 end
 
