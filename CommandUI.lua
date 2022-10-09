@@ -330,8 +330,10 @@ end
 function NOFLY()
 	FLYING = false
 	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
-	if Me.Character:FindFirstChildOfClass('Humanoid') then
-		Me.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+	if Me.Character then
+		if Me.Character:FindFirstChildOfClass('Humanoid') then
+			Me.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+		end
 	end
 	pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
 end
@@ -654,7 +656,7 @@ Title_1_Object_8 = Title_1.Toggle({
 			Spin.Parent = getRoot(Me.Character)
 			Spin.MaxTorque = Vector3.new(0, math.huge, 0)
 			Spin.AngularVelocity = Vector3.new(0,spinSpeed,0)
-		elseif not Value then
+		elseif not Value and Me.Character then
 			for i,v in pairs(getRoot(Me.Character):GetChildren()) do
 				if v.Name == "Spinning" then
 					v:Destroy()
