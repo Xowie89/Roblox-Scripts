@@ -6,6 +6,9 @@ Proportions 100%
 Body Type 0%
 ]]
 
+local Run_It = true
+if not Run_It then return end
+
 repeat
 	wait()
 until game:IsLoaded()
@@ -714,7 +717,7 @@ Title_2_Object_3 = Title_2.Dropdown({
 		target = Value
 		Tele(Value)
 	end,
-	Options = getPlayers()
+	Options = {"People", "go", "here"}
 })
 
 Title_2_Object_4 = Title_2.Button({
@@ -766,7 +769,7 @@ Title_2_Object_5 = Title_2.Dropdown({
 			viewChanged = workspace.CurrentCamera:GetPropertyChangedSignal("CameraSubject"):Connect(viewChangedFunc)
 		end
 	end,
-	Options = getPlayers()
+	Options = {"People", "go", "here"}
 })
 
 Title_2_Object_6 = Title_2.Dropdown({
@@ -790,7 +793,7 @@ Title_2_Object_6 = Title_2.Dropdown({
 			end)
 		end
 	end,
-	Options = getPlayers()
+	Options = {"People", "go", "here"}
 })
 
 --// Server \\--
@@ -876,7 +879,7 @@ Title_4_Object_6 = Title_4.Dropdown({
 	Callback = function(Value)
 		Bang(Value)
 	end,
-	Options = getPlayers()
+	Options = {"People", "go", "here"}
 })
 
 Title_4_Object_7 = Title_4.Dropdown({
@@ -900,7 +903,7 @@ Title_4_Object_7 = Title_4.Dropdown({
 			end)
 		end
 	end,
-	Options = getPlayers()
+	Options = {"People", "go", "here"}
 })
 
 --// Lighting \\--
@@ -982,19 +985,21 @@ Title_5_Object_6 = Title_5.Toggle({
 --// Teleport Player List Update \\--
 
 function onPlayerAdded(plr)
-	Title_2_Object_3:SetOptions(getPlayers())
-	Title_2_Object_5:SetOptions(getPlayers())
-	Title_2_Object_6:SetOptions(getPlayers())
-	Title_4_Object_6:SetOptions(getPlayers())
-	Title_4_Object_7:SetOptions(getPlayers())
+	local plr_List = getPlayers()
+	Title_2_Object_3:SetOptions(plr_List)
+	Title_2_Object_5:SetOptions(plr_List)
+	Title_2_Object_6:SetOptions(plr_List)
+	Title_4_Object_6:SetOptions(plr_List)
+	Title_4_Object_7:SetOptions(plr_List)
 end
 
 Players.PlayerRemoving:Connect(function(plr)
-	Title_2_Object_3:SetOptions(getPlayers())
-	Title_2_Object_5:SetOptions(getPlayers())
-	Title_2_Object_6:SetOptions(getPlayers())
-	Title_4_Object_6:SetOptions(getPlayers())
-	Title_4_Object_7:SetOptions(getPlayers())
+	local plr_List = getPlayers()
+	Title_2_Object_3:SetOptions(plr_List)
+	Title_2_Object_5:SetOptions(plr_List)
+	Title_2_Object_6:SetOptions(plr_List)
+	Title_4_Object_6:SetOptions(plr_List)
+	Title_4_Object_7:SetOptions(plr_List)
 	
 	if viewing ~= nil and player == viewing then
 		workspace.CurrentCamera.CameraSubject = Me.Character
@@ -1009,9 +1014,8 @@ end)
 
 Players.PlayerAdded:Connect(onPlayerAdded)
 
-for _,v in pairs(Players:GetPlayers()) do
-	onPlayerAdded(v)
-end
+onPlayerAdded()
+
 
 --// Left Control/Shift Click Teleport \\--
 
