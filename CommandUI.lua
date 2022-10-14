@@ -982,9 +982,9 @@ Title_5_Object_6 = Title_5.Toggle({
 	Enabled = false
 })
 
---// Teleport Player List Update \\--
+--// Player List Update \\--
 
-function onPlayerAdded(plr)
+function onPlayerAdded()
 	local plr_List = getPlayers()
 	Title_2_Object_3:SetOptions(plr_List)
 	Title_2_Object_5:SetOptions(plr_List)
@@ -993,13 +993,8 @@ function onPlayerAdded(plr)
 	Title_4_Object_7:SetOptions(plr_List)
 end
 
-Players.PlayerRemoving:Connect(function(plr)
-	local plr_List = getPlayers()
-	Title_2_Object_3:SetOptions(plr_List)
-	Title_2_Object_5:SetOptions(plr_List)
-	Title_2_Object_6:SetOptions(plr_List)
-	Title_4_Object_6:SetOptions(plr_List)
-	Title_4_Object_7:SetOptions(plr_List)
+Players.PlayerRemoving:Connect(function()
+	onPlayerAdded()
 	
 	if viewing ~= nil and player == viewing then
 		workspace.CurrentCamera.CameraSubject = Me.Character
