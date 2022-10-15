@@ -49,6 +49,7 @@ local swimbeat = nil
 local viewing = nil
 
 local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
+local temp_List = {"Player", "List", "Will", "Replace", "This"}
 
 --// Anti AFK \\--
 
@@ -85,6 +86,7 @@ if #getgenv().settings ~= sNames then
 			getgenv().settings[v] = sValues[i]
 		end
 	end
+	
 	writefile('CommandUISettings.txt', httpservice:JSONEncode(getgenv().settings))
 end
 
@@ -309,6 +311,7 @@ function sFLY(vfly)
 		elseif QEfly and KEY:lower() == 'q' then
 			CONTROL.E = -(vfly and vehicleflyspeed or iyflyspeed)*2
 		end
+		
 		pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
 	end)
 	
@@ -333,11 +336,13 @@ end
 function NOFLY()
 	FLYING = false
 	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
+	
 	if Me.Character then
 		if Me.Character:FindFirstChildOfClass('Humanoid') then
 			Me.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
 		end
 	end
+	
 	pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
 end
 
@@ -348,6 +353,7 @@ function Bang(plr)
 	wait()
 	local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
 	if tPlr then
+	
 		bangAnim = Instance.new("Animation")
 		if not r15(Me) then
 			bangAnim.AnimationId = "rbxassetid://148840371"
@@ -358,6 +364,7 @@ function Bang(plr)
 		bang = Me.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(bangAnim)
 		bang:Play(.1, 1, 1)
 		bang:AdjustSpeed(3)
+		
 		local bangplr = tPlr
 		bangDied = Me.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
 			bangLoop = bangLoop:Disconnect()
@@ -422,6 +429,7 @@ end
 
 function StopFreecam()
 	if not fcRunning then return end
+	
 	Input.StopCapture()
 	RunService:UnbindFromRenderStep("Freecam")
 	PlayerState.Pop()
@@ -717,7 +725,7 @@ Title_2_Object_3 = Title_2.Dropdown({
 		target = Value
 		Tele(Value)
 	end,
-	Options = {"People", "go", "here"}
+	Options = temp_List
 })
 
 Title_2_Object_4 = Title_2.Button({
@@ -769,7 +777,7 @@ Title_2_Object_5 = Title_2.Dropdown({
 			viewChanged = workspace.CurrentCamera:GetPropertyChangedSignal("CameraSubject"):Connect(viewChangedFunc)
 		end
 	end,
-	Options = {"People", "go", "here"}
+	Options = temp_List
 })
 
 Title_2_Object_6 = Title_2.Dropdown({
@@ -793,7 +801,7 @@ Title_2_Object_6 = Title_2.Dropdown({
 			end)
 		end
 	end,
-	Options = {"People", "go", "here"}
+	Options = temp_List
 })
 
 --// Server \\--
@@ -879,7 +887,7 @@ Title_4_Object_6 = Title_4.Dropdown({
 	Callback = function(Value)
 		Bang(Value)
 	end,
-	Options = {"People", "go", "here"}
+	Options = temp_List
 })
 
 Title_4_Object_7 = Title_4.Dropdown({
@@ -903,7 +911,7 @@ Title_4_Object_7 = Title_4.Dropdown({
 			end)
 		end
 	end,
-	Options = {"People", "go", "here"}
+	Options = temp_List
 })
 
 --// Lighting \\--
