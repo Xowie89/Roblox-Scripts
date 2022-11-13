@@ -307,9 +307,9 @@ function sFLY(vfly)
 		elseif KEY:lower() == 'd' then 
 			CONTROL.R = (vfly and vehicleflyspeed or iyflyspeed)
 		elseif QEfly and KEY:lower() == 'e' then
-			CONTROL.Q = (vfly and vehicleflyspeed or iyflyspeed)*2
+			CONTROL.Q = (vfly and vehicleflyspeed or iyflyspeed) * 2
 		elseif QEfly and KEY:lower() == 'q' then
-			CONTROL.E = -(vfly and vehicleflyspeed or iyflyspeed)*2
+			CONTROL.E = - (vfly and vehicleflyspeed or iyflyspeed) * 2
 		end
 		
 		pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
@@ -1025,9 +1025,9 @@ onPlayerAdded()
 mouse.Button1Down:Connect(function()
 	if Held_Button and getgenv().settings.click_Tele then
 		local root = Me.Character.HumanoidRootPart
-		local pos = mouse.Hit.Position+Vector3.new(0, 2.5, 0)
+		local pos = mouse.Hit.Position + Vector3.new(0, 2.5, 0)
 		local offset = pos-root.Position
-		root.CFrame = root.CFrame+offset
+		root.CFrame = root.CFrame + offset
 	end
 end)
 
