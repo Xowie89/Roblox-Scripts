@@ -432,8 +432,8 @@ function ESP(plr)
 				BillboardGui.Adornee = plr.Character.Head
 				BillboardGui.Name = plr.Name
 				BillboardGui.Parent = ESPholder
-				BillboardGui.Size = UDim2.new(0, 100, 0, 150)
-				BillboardGui.StudsOffset = Vector3.new(0, 3, 0)
+				BillboardGui.Size = UDim2.new(0, 75, 0, 150)
+				BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
 				BillboardGui.AlwaysOnTop = true
 				
 				local TextLabel = Instance.new("TextLabel")
@@ -484,7 +484,11 @@ function ESP(plr)
 					if COREGUI:FindFirstChild(plr.Name..'_ESP') then
 						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Players.LocalPlayer.Character and getRoot(Players.LocalPlayer.Character) and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 							local pos = math.floor(Players.LocalPlayer:DistanceFromCharacter(getRoot(plr.Character).Position))
-							TextLabel.Text = 'Name: '..plr.Name..' \n User: '..plr.DisplayName..' \n Studs: '..pos
+							if plr.Name ~= plr.DisplayName then
+								TextLabel.Text = 'Name: '..plr.Name..' \n Display: '..plr.DisplayName..' \n Studs: '..pos
+							else
+								TextLabel.Text = 'Name: '..plr.Name..' Studs: '..pos
+							end
 						end
 					else
 						teamChange:Disconnect()
