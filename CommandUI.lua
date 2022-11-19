@@ -432,7 +432,7 @@ function ESP(plr)
 				BillboardGui.Adornee = plr.Character.Head
 				BillboardGui.Name = plr.Name
 				BillboardGui.Parent = ESPholder
-				BillboardGui.Size = UDim2.new(0, 75, 0, 150)
+				BillboardGui.Size = UDim2.new(0, 100, 0, 150)
 				BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
 				BillboardGui.AlwaysOnTop = true
 				
