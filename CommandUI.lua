@@ -433,7 +433,7 @@ function ESP(plr)
 				BillboardGui.Name = plr.Name
 				BillboardGui.Parent = ESPholder
 				BillboardGui.Size = UDim2.new(0, 100, 0, 150)
-				BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
+				BillboardGui.StudsOffset = Vector3.new(0, 3, 0)
 				BillboardGui.AlwaysOnTop = true
 				
 				local TextLabel = Instance.new("TextLabel")
