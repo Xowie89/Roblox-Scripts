@@ -440,13 +440,13 @@ function ESP(plr)
 				TextLabel.Parent = BillboardGui
 				TextLabel.BackgroundTransparency = 1
 				TextLabel.Position = UDim2.new(0, 0, 0, -50)
-				TextLabel.Size = UDim2.new(0, 100, 0, 100)
+				TextLabel.Size = UDim2.new(1, 0, 1, 0)
 				TextLabel.Font = Enum.Font.SourceSansSemibold
 				TextLabel.TextSize = 20
 				TextLabel.TextColor3 = Color3.new(1, 1, 1)
 				TextLabel.TextStrokeTransparency = 0
 				TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
-				TextLabel.Text = 'Name: '..plr.Name
+				TextLabel.Text = plr.Name
 				TextLabel.ZIndex = 10
 				
 				local espLoopFunc
@@ -483,8 +483,8 @@ function ESP(plr)
 				local function espLoop()
 					if COREGUI:FindFirstChild(plr.Name..'_ESP') then
 						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Players.LocalPlayer.Character and getRoot(Players.LocalPlayer.Character) and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-							local pos = math.floor((getRoot(Players.LocalPlayer.Character).Position - getRoot(plr.Character).Position).magnitude)
-							TextLabel.Text = 'Name: '..plr.Name..' | Health: '..round(plr.Character:FindFirstChildOfClass('Humanoid').Health, 1)..' | Studs: '..pos
+							local pos = math.floor(Players.LocalPlayer:DistanceFromCharacter(getRoot(plr.Character).Position))
+							TextLabel.Text = 'Name: '..plr.Name..' \n User: '..plr.DisplayName..' \n Studs: '..pos
 						end
 					else
 						teamChange:Disconnect()
@@ -1120,13 +1120,18 @@ Title_5_Object_6 = Title_5.Toggle({
 
 --// Player List Update \\--
 
-function onPlayerAdded()
+function onPlayerAdded(plr)
 	local plr_List = getPlayers()
 	Title_2_Object_3:SetOptions(plr_List)
 	Title_2_Object_5:SetOptions(plr_List)
 	Title_2_Object_6:SetOptions(plr_List)
 	Title_4_Object_6:SetOptions(plr_List)
 	Title_4_Object_7:SetOptions(plr_List)
+	
+	if ESPenabled then
+		repeat wait(1) until plr.Character and getRoot(plr.Character)
+		ESP(plr)
+	end
 end
 
 Players.PlayerRemoving:Connect(function()
