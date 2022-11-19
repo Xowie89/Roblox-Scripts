@@ -487,7 +487,7 @@ function ESP(plr)
 							if plr.Name ~= plr.DisplayName then
 								TextLabel.Text = 'Name: '..plr.Name..' \n Display: '..plr.DisplayName..' \n Studs: '..pos
 							else
-								TextLabel.Text = 'Name: '..plr.Name..' Studs: '..pos
+								TextLabel.Text = 'Name: '..plr.Name..' \n Studs: '..pos
 							end
 						end
 					else
