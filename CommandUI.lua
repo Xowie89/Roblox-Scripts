@@ -1133,16 +1133,16 @@ function GetList()
 	Title_4_Object_7:SetOptions(plr_List)
 end
 
-function onPlayerAdded(plr)
+Players.PlayerAdded:Connect(function(plr)
 	GetList()
 	
 	if ESPenabled then
 		repeat wait(1) until plr.Character and getRoot(plr.Character)
 		ESP(plr)
 	end
-end
+end)
 
-Players.PlayerRemoving:Connect(function()
+Players.PlayerRemoving:Connect(function(plr)
 	GetList()
 	
 	if ESPenabled then
@@ -1164,10 +1164,7 @@ Players.PlayerRemoving:Connect(function()
 	end
 end)
 
-Players.PlayerAdded:Connect(onPlayerAdded)
-
-onPlayerAdded()
-
+GetList()
 
 --// Left Control/Shift Click Teleport \\--
 
