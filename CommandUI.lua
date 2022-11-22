@@ -1124,13 +1124,17 @@ Title_5_Object_6 = Title_5.Toggle({
 
 --// Player List Update \\--
 
-function onPlayerAdded(plr)
+function GetList()
 	local plr_List = getPlayers()
 	Title_2_Object_3:SetOptions(plr_List)
 	Title_2_Object_5:SetOptions(plr_List)
 	Title_2_Object_6:SetOptions(plr_List)
 	Title_4_Object_6:SetOptions(plr_List)
 	Title_4_Object_7:SetOptions(plr_List)
+end
+
+function onPlayerAdded(plr)
+	GetList()
 	
 	if ESPenabled then
 		repeat wait(1) until plr.Character and getRoot(plr.Character)
@@ -1139,7 +1143,7 @@ function onPlayerAdded(plr)
 end
 
 Players.PlayerRemoving:Connect(function()
-	onPlayerAdded()
+	GetList()
 	
 	if ESPenabled then
 		for i,v in pairs(COREGUI:GetChildren()) do
