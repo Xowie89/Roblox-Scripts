@@ -49,6 +49,7 @@ local bangAnim = nil
 local bangDied = nil
 local swimbeat = nil
 local viewing = nil
+local lastDeath
 
 local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
 local temp_List = {"Player", "List", "Will", "Replace", "This"}
@@ -99,6 +100,31 @@ local function saveSettings()
 		print('Settings saved.')
 		writefile('CommandUISettings.txt', httpservice:JSONEncode(getgenv().settings))
 	end
+end
+
+--// Functions \\--
+
+function GetUp()
+	if Me.Character:FindFirstChildOfClass('Humanoid') and Me.Character:FindFirstChildOfClass('Humanoid').SeatPart then
+		Me.Character:FindFirstChildOfClass('Humanoid').Sit = false
+		wait(.1)
+	end
+end
+
+function getRoot(char)
+	local rootPart = char:FindFirstChild('HumanoidRootPart') or char:FindFirstChild('Torso') or char:FindFirstChild('UpperTorso')
+	return rootPart
+end
+
+function r15(plr)
+	if plr.Character:FindFirstChildOfClass('Humanoid').RigType == Enum.HumanoidRigType.R15 then
+		return true
+	end
+end
+
+function getTorso(x)
+	x = x or Players.LocalPlayer.Character
+	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
 end
 
 --// Shrink \\--
@@ -185,7 +211,7 @@ local function ServerHop()
 	local searched = false
 	local maximum = Players.MaxPlayers - 1
 	local minimum = math.ceil(Players.MaxPlayers ^ 0.9)
-	local pid = game.PlaceId --PlaceId
+	local pid = game.PlaceId
 	local Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
 	Me:Kick("\nDo not leave.\nSearching for a server with a max of "..maximum.." players and a min of "..minimum.." players.")
 	
@@ -221,6 +247,7 @@ function Tele(plr)
 				local myRoot = myChar:FindFirstChild("HumanoidRootPart")
 				local tRoot = tChar:FindFirstChild("HumanoidRootPart")
 				if myRoot and tRoot then
+					GetUp()
 					myRoot.CFrame = tRoot.CFrame
 				end
 			end
@@ -503,40 +530,7 @@ function ESP(plr)
 	end)
 end
 
---// Functions \\--
-
-function getRoot(char)
-	local rootPart = char:FindFirstChild('HumanoidRootPart') or char:FindFirstChild('Torso') or char:FindFirstChild('UpperTorso')
-	return rootPart
-end
-
-function r15(plr)
-	if plr.Character:FindFirstChildOfClass('Humanoid').RigType == Enum.HumanoidRigType.R15 then
-		return true
-	end
-end
-
-function getTorso(x)
-	x = x or Players.LocalPlayer.Character
-	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
-end
-
-function onDied()
-	task.spawn(function()
-		if pcall(function() Me.Character:FindFirstChildOfClass('Humanoid') end) and Me.Character:FindFirstChildOfClass('Humanoid') then
-			Me.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
-				--Add Stuff later
-			end)
-			
-			if getgenv().settings.auto_Shrink then
-				spawn(shrink)
-			end
-		else
-			wait(2)
-			onDied()
-		end
-	end)
-end
+--// Other Functions \\--
 
 function StopFreecam()
 	if not fcRunning then return end
@@ -840,7 +834,27 @@ Title_2_Object_1 = Title_2.Toggle({
 	Enabled = getgenv().settings.click_Tele
 })
 
-Title_2_Object_2 = Title_2.Toggle({
+Title_2_Object_2 = Title_2.Button({
+	Text = "Flashback",
+	Callback = function(Value)
+		if lastDeath ~= nil then
+			if Me.Character:FindFirstChildOfClass('Humanoid') and Me.Character:FindFirstChildOfClass('Humanoid').SeatPart then
+				Me.Character:FindFirstChildOfClass('Humanoid').Sit = false
+				wait(.1)
+			end
+			getRoot(Me.Character).CFrame = lastDeath
+		end
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Teleport back to the last place you died."
+			})
+		end
+	}
+})
+
+Title_2_Object_3 = Title_2.Toggle({
 	Text = "Loop Tele",
 	Callback = function(Value)
 		loop_Tele = Value
@@ -851,7 +865,7 @@ Title_2_Object_2 = Title_2.Toggle({
 	Enabled = false
 })
 
-Title_2_Object_3 = Title_2.Dropdown({
+Title_2_Object_4 = Title_2.Dropdown({
 	Text = "Teleport To",
 	Callback = function(Value)
 		target = Value
@@ -860,7 +874,7 @@ Title_2_Object_3 = Title_2.Dropdown({
 	Options = temp_List
 })
 
-Title_2_Object_4 = Title_2.Button({
+Title_2_Object_5 = Title_2.Button({
 	Text = "Unview",
 	Callback = function(Value)
 		StopFreecam()
@@ -876,10 +890,16 @@ Title_2_Object_4 = Title_2.Button({
 		
 		workspace.CurrentCamera.CameraSubject = Me.Character
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Stops spying."
+			})
+		end
+	}
 })
 
-
-Title_2_Object_5 = Title_2.Dropdown({
+Title_2_Object_6 = Title_2.Dropdown({
 	Text = "View",
 	Callback = function(Value)
 		StopFreecam()
@@ -912,7 +932,7 @@ Title_2_Object_5 = Title_2.Dropdown({
 	Options = temp_List
 })
 
-Title_2_Object_6 = Title_2.Dropdown({
+Title_2_Object_7 = Title_2.Dropdown({
 	Text = "Headsit",
 	Callback = function(Value)
 		local plr = Value
@@ -943,6 +963,13 @@ Title_3_Object_1 = Title_3.Button({
 	Callback = function(Value)
 		ServerHop()
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Hops to a server that is almost full."
+			})
+		end
+	}
 })
 
 Title_3_Object_2 = Title_3.Button({
@@ -956,6 +983,13 @@ Title_3_Object_2 = Title_3.Button({
 			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Me)
 		end
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Rejoins the current server."
+			})
+		end
+	}
 })
 
 --// Fly/Perv \\--
@@ -1012,6 +1046,13 @@ Title_4_Object_5 = Title_4.Button({
 	Callback = function(Value)
 		Unbang()
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Stops banging."
+			})
+		end
+	}
 })
 
 Title_4_Object_6 = Title_4.Dropdown({
@@ -1057,6 +1098,13 @@ Title_5_Object_1 = Title_5.Button({
 		Lighting.GlobalShadows = false
 		Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Makes it all bright."
+			})
+		end
+	}
 })
 
 Title_5_Object_2 = Title_5.Slider({
@@ -1079,6 +1127,13 @@ Title_5_Object_3 = Title_5.Button({
 			end
 		end
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Gets rid of fog."
+			})
+		end
+	}
 })
 
 Title_5_Object_4 = Title_5.Toggle({
@@ -1100,6 +1155,13 @@ Title_5_Object_5 = Title_5.Button({
 		Lighting.FogStart = origsettings.fs
 		Lighting.GlobalShadows = origsettings.gs
 	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Returns lighting to its original state."
+			})
+		end
+	}
 })
 
 Title_5_Object_6 = Title_5.Toggle({
@@ -1126,11 +1188,30 @@ Title_5_Object_6 = Title_5.Toggle({
 
 function GetList()
 	local plr_List = getPlayers()
-	Title_2_Object_3:SetOptions(plr_List)
-	Title_2_Object_5:SetOptions(plr_List)
+	Title_2_Object_4:SetOptions(plr_List)
 	Title_2_Object_6:SetOptions(plr_List)
+	Title_2_Object_7:SetOptions(plr_List)
 	Title_4_Object_6:SetOptions(plr_List)
 	Title_4_Object_7:SetOptions(plr_List)
+end
+
+function onDied()
+	task.spawn(function()
+		if pcall(function() Me.Character:FindFirstChildOfClass('Humanoid') end) and Me.Character:FindFirstChildOfClass('Humanoid') then
+			Me.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
+				if getRoot(Me.Character) then
+					lastDeath = getRoot(Me.Character).CFrame
+				end
+			end)
+			
+			if getgenv().settings.auto_Shrink then
+				spawn(shrink)
+			end
+		else
+			wait(2)
+			onDied()
+		end
+	end)
 end
 
 Players.PlayerAdded:Connect(function(plr)
@@ -1147,13 +1228,13 @@ Players.PlayerRemoving:Connect(function(plr)
 	
 	if ESPenabled then
 		for i,v in pairs(COREGUI:GetChildren()) do
-			if v.Name == player.Name..'_ESP' then
+			if v.Name == plr.Name..'_ESP' then
 				v:Destroy()
 			end
 		end
 	end
 	
-	if viewing ~= nil and player == viewing then
+	if viewing ~= nil and plr == viewing then
 		workspace.CurrentCamera.CameraSubject = Me.Character
 		viewing = nil
 		
@@ -1173,6 +1254,7 @@ mouse.Button1Down:Connect(function()
 		local root = Me.Character.HumanoidRootPart
 		local pos = mouse.Hit.Position + Vector3.new(0, 2.5, 0)
 		local offset = pos-root.Position
+		GetUp()
 		root.CFrame = root.CFrame + offset
 	end
 end)
@@ -1198,3 +1280,5 @@ Me.CharacterAdded:Connect(function(char)
 	repeat wait() until getRoot(char)
 	onDied()
 end)
+
+onDied()
