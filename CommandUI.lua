@@ -213,7 +213,7 @@ local function ServerHop()
 	local searched = false
 	local pid = game.PlaceId
 	local Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
-	Me:Kick("\nDo not leave.\nSearching for a server with a max of "..maximumPlayers.." players and a min of "..minimumPlayers.." players.")
+	Me:Kick("\nDo not leave.\nSearching for a server with a minimum of "..minimumPlayers.." and a maximum of "..maximumPlayers.." players.")
 	
 	repeat
 		if searched then
@@ -969,7 +969,7 @@ Title_3_Object_1 = Title_3.Slider({
 	end,
 	Min = 1,
 	Max = maximumPlayers,
-	Def = Min
+	Def = 1
 })
 
 Title_3_Object_2 = Title_3.Slider({
@@ -979,7 +979,7 @@ Title_3_Object_2 = Title_3.Slider({
 	end,
 	Min = 1,
 	Max = maximumPlayers,
-	Def = Max
+	Def = maximumPlayers
 })
 
 Title_3_Object_3 = Title_3.Button({
