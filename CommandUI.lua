@@ -990,7 +990,7 @@ Title_3_Object_3 = Title_3.Button({
 	Menu = {
 		Info = function(self)
 			MainGui.Banner({
-				Text = "Hops to a server that is between Min Players and Max Players."
+				Text = "Hops to the first server that has between Min and Max amount of players."
 			})
 		end
 	}
