@@ -50,6 +50,8 @@ local bangDied = nil
 local swimbeat = nil
 local viewing = nil
 local lastDeath
+local maximumPlayers = Players.MaxPlayers - 1
+local minimumPlayers = 1
 
 local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
 local temp_List = {"Player", "List", "Will", "Replace", "This"}
@@ -209,11 +211,9 @@ end
 local function ServerHop()
 	local foundserver = false
 	local searched = false
-	local maximum = Players.MaxPlayers - 1
-	local minimum = math.ceil(Players.MaxPlayers ^ 0.9)
 	local pid = game.PlaceId
 	local Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
-	Me:Kick("\nDo not leave.\nSearching for a server with a max of "..maximum.." players and a min of "..minimum.." players.")
+	Me:Kick("\nDo not leave.\nSearching for a server with a max of "..maximumPlayers.." players and a min of "..minimumPlayers.." players.")
 	
 	repeat
 		if searched then
@@ -224,7 +224,7 @@ local function ServerHop()
 		end
 		
 		for i,v in pairs(Servers.data) do
-			if v.playing <= maximum and v.playing >= minimum then
+			if v.playing <= maximumPlayers and v.playing >= minimumPlayers then
 				foundserver = true
 				TeleportService:TeleportToPlaceInstance(pid, v.id)
 			end
@@ -260,7 +260,11 @@ function getPlayers()
 	local Plrs = {}
 	for _,v in pairs(Players:GetPlayers()) do
 		if v ~= Me then
-			table.insert(Plrs, v.Name.." - "..v.DisplayName)
+			if v.Name ~= v.DisplayName then
+				table.insert(Plrs, v.Name.." - "..v.DisplayName)
+			else
+				table.insert(Plrs, v.Name)
+			end
 		end
 	end
 	return Plrs
@@ -958,7 +962,27 @@ Title_2_Object_7 = Title_2.Dropdown({
 
 --// Server \\--
 
-Title_3_Object_1 = Title_3.Button({
+Title_3_Object_1 = Title_3.Slider({
+	Text = "Min Players",
+	Callback = function(Value)
+		minimumPlayers = Value
+	end,
+	Min = 1,
+	Max = maximumPlayers,
+	Def = Min
+})
+
+Title_3_Object_2 = Title_3.Slider({
+	Text = "Max Players",
+	Callback = function(Value)
+		maximumPlayers = Value
+	end,
+	Min = 1,
+	Max = maximumPlayers,
+	Def = Max
+})
+
+Title_3_Object_3 = Title_3.Button({
 	Text = "Server Hop",
 	Callback = function(Value)
 		ServerHop()
@@ -966,13 +990,13 @@ Title_3_Object_1 = Title_3.Button({
 	Menu = {
 		Info = function(self)
 			MainGui.Banner({
-				Text = "Hops to a server that is almost full."
+				Text = "Hops to a server that is between Min Players and Max Players."
 			})
 		end
 	}
 })
 
-Title_3_Object_2 = Title_3.Button({
+Title_3_Object_4 = Title_3.Button({
 	Text = "Rejoin",
 	Callback = function(Value)
 		if #Players:GetPlayers() <= 1 then
@@ -1001,7 +1025,7 @@ Title_4_Object_1 = Title_4.Slider({
 		vehicleflyspeed = Value
 	end,
 	Min = 1,
-	Max = 5,
+	Max = 25,
 	Def = 1
 })
 
