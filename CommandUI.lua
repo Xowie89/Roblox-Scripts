@@ -1,3 +1,5 @@
+--// Auto shrink scale settings \\--
+
 --[[
 Height 0%
 Width 0%
@@ -5,6 +7,8 @@ Head 100%
 Proportions 100%
 Body Type 0%
 ]]
+
+--// Variables \\--
 
 local Run_It = true
 if not Run_It then return end
@@ -125,7 +129,7 @@ function r15(plr)
 end
 
 function getTorso(x)
-	x = x or Players.LocalPlayer.Character
+	x = x or Me.Character
 	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
 end
 
@@ -232,7 +236,7 @@ local function ServerHop()
 		
 		searched = true
 		wait(1)
-	until foundserver == true
+	until foundserver
 end
 
 --// Teleporter \\--
@@ -437,7 +441,7 @@ function ESP(plr)
 		
 		wait()
 		
-		if plr.Character and plr.Name ~= Players.LocalPlayer.Name and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
+		if plr.Character and plr.Name ~= Me.Name and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
 			local ESPholder = Instance.new("Folder")
 			ESPholder.Name = plr.Name..'_ESP'
 			ESPholder.Parent = COREGUI
@@ -513,8 +517,8 @@ function ESP(plr)
 				
 				local function espLoop()
 					if COREGUI:FindFirstChild(plr.Name..'_ESP') then
-						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Players.LocalPlayer.Character and getRoot(Players.LocalPlayer.Character) and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-							local pos = math.floor(Players.LocalPlayer:DistanceFromCharacter(getRoot(plr.Character).Position))
+						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid") then
+							local pos = math.floor(Me:DistanceFromCharacter(getRoot(plr.Character).Position))
 							if plr.Name ~= plr.DisplayName then
 								TextLabel.Text = 'Name: '..plr.Name..' \n Display: '..plr.DisplayName..' \n Studs: '..pos
 							else
