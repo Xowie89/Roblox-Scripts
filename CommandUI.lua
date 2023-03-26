@@ -43,6 +43,8 @@ local Held_Button = false
 local refreshCmd = false
 local loop_Tele = false
 local ESPenabled = false
+local Tracers_Visible = false
+local Hide_Team = false
 local target = false
 local FLYING = false
 local QEfly = true
@@ -54,8 +56,8 @@ local bangDied = nil
 local swimbeat = nil
 local viewing = nil
 local lastDeath
-local maximumPlayers = Players.MaxPlayers - 1
 local minimumPlayers = 1
+local maximumPlayers = Players.MaxPlayers - 1
 
 local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
 local temp_List = {"Player", "List", "Will", "Replace", "This"}
@@ -136,128 +138,134 @@ end
 --// Shrink \\--
 
 local shrink = function()
-	wait(3)
-	local suc, err = pcall(function()
-		local Hum = Me.Character:FindFirstChild("Humanoid")
-		if Hum and r15(Me) then
-		
-			local function rm()
-				for _, v in pairs(Me.Character:GetDescendants()) do
-					if v:IsA("BasePart") then
-						if v.Name ~= "Head" then
-							for _, cav in pairs(v:GetDescendants()) do
-								if cav:IsA("Attachment") then
-									local OP = cav:FindFirstChild("OriginalPosition")
-									if OP then
-										OP:Destroy()
+	task.spawn(function()
+		wait(3)
+		local suc, err = pcall(function()
+			local Hum = Me.Character:FindFirstChild("Humanoid")
+			if Hum and r15(Me) then
+			
+				local function rm()
+					for _, v in pairs(Me.Character:GetDescendants()) do
+						if v:IsA("BasePart") then
+							if v.Name ~= "Head" then
+								for _, cav in pairs(v:GetDescendants()) do
+									if cav:IsA("Attachment") then
+										local OP = cav:FindFirstChild("OriginalPosition")
+										if OP then
+											OP:Destroy()
+										end
 									end
 								end
-							end
-							
-							local OS = v:FindFirstChild("OriginalSize")
-							if OS then
-								OS:Destroy()
-							end
-							
-							local APST = v:FindFirstChild("AvatarPartScaleType")
-							if APST then
-								APST:Destroy()
+								
+								local OS = v:FindFirstChild("OriginalSize")
+								if OS then
+									OS:Destroy()
+								end
+								
+								local APST = v:FindFirstChild("AvatarPartScaleType")
+								if APST then
+									APST:Destroy()
+								end
 							end
 						end
 					end
 				end
+				
+				rm()
+				wait(0.5)
+				
+				local BTS = Hum:FindFirstChild("BodyTypeScale")
+				if BTS then
+					BTS:Destroy()
+				end
+				
+				wait(0.5)
+				rm()
+				wait(0.5)
+				
+				local BWS = Hum:FindFirstChild("BodyWidthScale")
+				if BWS then
+					BWS:Destroy()
+				end
+				
+				wait(0.5)
+				rm()
+				wait(0.5)
+				
+				local BDS = Hum:FindFirstChild("BodyDepthScale")
+				if BDS then
+					BDS:Destroy()
+				end
+				
+				wait(0.5)
+				rm()
+				wait(0.5)
+				
+				local HS = Hum:FindFirstChild("HeadScale")
+				if HS then
+					HS:Destroy()
+				end
 			end
-			
-			rm()
-			wait(0.5)
-			
-			local BTS = Hum:FindFirstChild("BodyTypeScale")
-			if BTS then
-				BTS:Destroy()
-			end
-			
-			wait(0.5)
-			rm()
-			wait(0.5)
-			
-			local BWS = Hum:FindFirstChild("BodyWidthScale")
-			if BWS then
-				BWS:Destroy()
-			end
-			
-			wait(0.5)
-			rm()
-			wait(0.5)
-			
-			local BDS = Hum:FindFirstChild("BodyDepthScale")
-			if BDS then
-				BDS:Destroy()
-			end
-			
-			wait(0.5)
-			rm()
-			wait(0.5)
-			
-			local HS = Hum:FindFirstChild("HeadScale")
-			if HS then
-				HS:Destroy()
-			end
+		end)
+		
+		if not suc then
+			warn(err)
 		end
 	end)
-	
-	if not suc then
-		warn(err)
-	end
 end
 
 --// Server Hop \\--
 
 local function ServerHop()
+	if minimumPlayers > maximumPlayers then return end
 	local foundserver = false
 	local searched = false
 	local pid = game.PlaceId
 	local Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
 	Me:Kick("\nDo not leave.\nSearching for a server with a minimum of "..minimumPlayers.." and a maximum of "..maximumPlayers.." players.")
-	
-	repeat
-		if searched then
-			if not Servers.nextPageCursor then
-				warn("All servers searched")
+	task.spawn(function()
+		repeat
+			if searched then
+				if not Servers.nextPageCursor then
+					warn("All servers searched")
+				end
+				Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
 			end
-			Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
-		end
-		
-		for i,v in pairs(Servers.data) do
-			if v.playing <= maximumPlayers and v.playing >= minimumPlayers then
-				foundserver = true
-				TeleportService:TeleportToPlaceInstance(pid, v.id)
+			
+			for i,v in pairs(Servers.data) do
+				if v.playing <= maximumPlayers and v.playing >= minimumPlayers then
+					foundserver = true
+					TeleportService:TeleportToPlaceInstance(pid, v.id)
+				end
 			end
-		end
-		
-		searched = true
-		wait(1)
-	until foundserver
+			
+			searched = true
+			wait(1)
+		until foundserver
+	end)
 end
 
 --// Teleporter \\--
 
 function Tele(plr)
-	repeat
-		local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
-		if tPlr then
-			local myChar = Me.Character
-			local tChar = tPlr.Character
-			if myChar and tChar then
-				local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-				local tRoot = tChar:FindFirstChild("HumanoidRootPart")
-				if myRoot and tRoot then
-					GetUp()
-					myRoot.CFrame = tRoot.CFrame
+	task.spawn(function()
+		repeat
+			local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
+			if tPlr then
+				local myChar = Me.Character
+				local tChar = tPlr.Character
+				if myChar and tChar then
+					local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+					local tRoot = tChar:FindFirstChild("HumanoidRootPart")
+					if myRoot and tRoot then
+						GetUp()
+						myRoot.CFrame = tRoot.CFrame
+					end
 				end
 			end
-		end
-		wait()
-	until not loop_Tele or target ~= plr or not plr or not tPlr or not target
+			wait()
+		until not loop_Tele or target ~= plr or not plr or not tPlr or not target
+	end)
 end
 
 function getPlayers()
@@ -439,14 +447,16 @@ function ESP(plr)
 			end
 		end
 		
+		if not ESPenabled then return end
+		
 		wait()
 		
-		if plr.Character and plr.Name ~= Me.Name and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
+		if plr.Character and plr ~= Me and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
 			local ESPholder = Instance.new("Folder")
 			ESPholder.Name = plr.Name..'_ESP'
 			ESPholder.Parent = COREGUI
 			
-			repeat wait(1) until plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
+			repeat wait() until plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
 			
 			for b,n in pairs (plr.Character:GetChildren()) do
 				if (n:IsA("BasePart")) then
@@ -457,7 +467,11 @@ function ESP(plr)
 					a.AlwaysOnTop = true
 					a.ZIndex = 10
 					a.Size = n.Size
-					a.Transparency = 0.3
+					if Hide_Team and plr.TeamColor == Me.TeamColor then
+						a.Transparency = 1
+					else
+						a.Transparency = .5
+					end
 					a.Color = plr.TeamColor
 				end
 			end
@@ -472,17 +486,25 @@ function ESP(plr)
 				BillboardGui.AlwaysOnTop = true
 				
 				local TextLabel = Instance.new("TextLabel")
-				TextLabel.Parent = BillboardGui
 				TextLabel.BackgroundTransparency = 1
 				TextLabel.Position = UDim2.new(0, 0, 0, -50)
 				TextLabel.Size = UDim2.new(1, 0, 1, 0)
 				TextLabel.Font = Enum.Font.SourceSansSemibold
 				TextLabel.TextSize = 20
 				TextLabel.TextColor3 = Color3.new(1, 1, 1)
-				TextLabel.TextStrokeTransparency = 0
 				TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
 				TextLabel.Text = plr.Name
 				TextLabel.ZIndex = 10
+				
+				if Hide_Team and plr.TeamColor == Me.TeamColor then
+					TextLabel.TextTransparency = 1
+					TextLabel.TextStrokeTransparency = 1
+				else
+					TextLabel.TextTransparency = 0
+					TextLabel.TextStrokeTransparency = 0
+				end
+				
+				TextLabel.Parent = BillboardGui
 				
 				local espLoopFunc
 				local teamChange
@@ -493,7 +515,7 @@ function ESP(plr)
 						espLoopFunc:Disconnect()
 						teamChange:Disconnect()
 						ESPholder:Destroy()
-						repeat wait(1) until getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
+						repeat wait() until getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
 						ESP(plr)
 						addedFunc:Disconnect()
 					else
@@ -507,7 +529,7 @@ function ESP(plr)
 						espLoopFunc:Disconnect()
 						addedFunc:Disconnect()
 						ESPholder:Destroy()
-						repeat wait(1) until getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
+						repeat wait() until getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
 						ESP(plr)
 						teamChange:Disconnect()
 					else
@@ -536,6 +558,50 @@ function ESP(plr)
 			end
 		end
 	end)
+end
+
+--// Tracers \\--
+
+function activateTracers(Plr)
+	if Plr ~= Me then
+		local TracerLine = Drawing.new("Line")
+
+		RunService.RenderStepped:Connect(function()
+			if Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
+				local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart_Position * CFrame.new(0, -HumanoidRootPart_Size.Y, 0).p)
+				
+				TracerLine.Thickness = 1
+				TracerLine.Transparency = .5
+				TracerLine.Color = Plr.TeamColor.Color
+
+				TracerLine.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+
+				if OnScreen then
+					TracerLine.To = Vector2.new(Vector.X, Vector.Y)
+					if Hide_Team then
+						if Plr.TeamColor == Me.TeamColor then
+							TracerLine.Visible = false
+						else
+							TracerLine.Visible = Tracers_Visible
+						end
+					else
+						TracerLine.Visible = Tracers_Visible
+					end
+				else
+					TracerLine.Visible = false
+				end
+			else
+				TracerLine.Visible = false
+			end
+		end)
+
+		Players.PlayerRemoving:Connect(function(plr)
+			if plr == v then
+				TracerLine.Visible = false
+			end
+		end)
+	end
 end
 
 --// Other Functions \\--
@@ -611,6 +677,10 @@ Title_4 = MainGui.New({
 
 Title_5 = MainGui.New({
 	Title = "Lighting"
+})
+
+Title_6 = MainGui.New({
+	Title = "ESP"
 })
 
 --// Player \\--
@@ -810,27 +880,6 @@ Title_1_Object_9 = Title_1.Button({
 	}
 })
 
-Title_1_Object_10 = Title_1.Toggle({
-	Text = "ESP",
-	Callback = function(Value)
-		ESPenabled = Value
-		if Value then
-			for i,v in pairs(Players:GetPlayers()) do
-				if v ~= Me then
-					ESP(v)
-				end
-			end
-		elseif not Value then
-			for i,c in pairs(COREGUI:GetChildren()) do
-				if string.sub(c.Name, -4) == '_ESP' then
-					c:Destroy()
-				end
-			end
-		end
-	end,
-	Enabled = false
-})
-
 --// Teleport \\--
 
 Title_2_Object_1 = Title_2.Toggle({
@@ -845,7 +894,7 @@ Title_2_Object_1 = Title_2.Toggle({
 Title_2_Object_2 = Title_2.Button({
 	Text = "Flashback",
 	Callback = function(Value)
-		if lastDeath ~= nil then
+		if lastDeath then
 			if Me.Character:FindFirstChildOfClass('Humanoid') and Me.Character:FindFirstChildOfClass('Humanoid').SeatPart then
 				Me.Character:FindFirstChildOfClass('Humanoid').Sit = false
 				wait(.1)
@@ -1098,7 +1147,7 @@ Title_4_Object_7 = Title_4.Dropdown({
 		local tPlr = Players:FindFirstChild(string.sub(plr, 1, string.find(plr, " ") - 1))
 		if tPlr then
 			if headSit then
-				headSit:Disconnect() 
+				headSit:Disconnect()
 			end
 			
 			Me.Character:FindFirstChildOfClass('Humanoid').Sit = true
@@ -1212,6 +1261,44 @@ Title_5_Object_6 = Title_5.Toggle({
 	Enabled = false
 })
 
+--// ESP \\--
+
+Title_1_Object_1 = Title_6.Toggle({
+	Text = "ESP",
+	Callback = function(Value)
+		ESPenabled = Value
+		
+		for i,v in pairs(Players:GetPlayers()) do
+			if v ~= Me then
+				ESP(v)
+			end
+		end
+	end,
+	Enabled = false
+})
+
+Title_1_Object_2 = Title_6.Toggle({
+	Text = "Tracers",
+	Callback = function(Value)
+		Tracers_Visible = Value
+	end,
+	Enabled = false
+})
+
+Title_1_Object_3 = Title_6.Toggle({
+	Text = "Hide Team",
+	Callback = function(Value)
+		Hide_Team = Value
+		
+		for i,v in pairs(Players:GetPlayers()) do
+			if v ~= Me then
+				ESP(v)
+			end
+		end
+	end,
+	Enabled = false
+})
+
 --// Player List Update \\--
 
 function GetList()
@@ -1244,10 +1331,15 @@ end
 
 Players.PlayerAdded:Connect(function(plr)
 	GetList()
+	activateTracers(plr)
 	
 	if ESPenabled then
-		repeat wait(1) until plr.Character and getRoot(plr.Character)
-		ESP(plr)
+		repeat wait() until plr.Character and getRoot(plr.Character)
+		if Hide_Team and plr.TeamColor ~= Me.TeamColor then
+			ESP(plr)
+		elseif not Hide_Team then
+			ESP(plr)
+		end
 	end
 end)
 
@@ -1310,3 +1402,8 @@ Me.CharacterAdded:Connect(function(char)
 end)
 
 onDied()
+
+--// Tracers Start \\--
+for _, v in pairs(Players:GetPlayers()) do
+	activateTracers(v)
+end
