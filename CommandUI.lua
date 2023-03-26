@@ -8,8 +8,6 @@ Proportions 100%
 Body Type 0%
 ]]
 
---// Variables \\--
-
 local Run_It = true
 if not Run_It then return end
 
@@ -17,6 +15,8 @@ local COREGUI = game:GetService("CoreGui")
 if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
+
+--// Variables \\--
 
 local TeleportService = game:GetService('TeleportService')
 local VirtualUser = game:GetService("VirtualUser")
@@ -481,18 +481,16 @@ function ESP(plr)
 				BillboardGui.Adornee = plr.Character.Head
 				BillboardGui.Name = plr.Name
 				BillboardGui.Parent = ESPholder
-				BillboardGui.Size = UDim2.new(0, 100, 0, 150)
-				BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
+				BillboardGui.Size = UDim2.new(10, 0, 3, 0)
+				BillboardGui.SizeOffset = Vector2.new(0, .75)
 				BillboardGui.AlwaysOnTop = true
 				
 				local TextLabel = Instance.new("TextLabel")
 				TextLabel.BackgroundTransparency = 1
-				TextLabel.Position = UDim2.new(0, 0, 0, -50)
 				TextLabel.Size = UDim2.new(1, 0, 1, 0)
-				TextLabel.Font = Enum.Font.SourceSansSemibold
-				TextLabel.TextSize = 20
+				TextLabel.TextScaled = true
 				TextLabel.TextColor3 = Color3.new(1, 1, 1)
-				TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
+				TextLabel.TextYAlignment = Enum.TextYAlignment.Center
 				TextLabel.Text = plr.Name
 				TextLabel.ZIndex = 10
 				
@@ -542,9 +540,9 @@ function ESP(plr)
 						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid") then
 							local pos = math.floor(Me:DistanceFromCharacter(getRoot(plr.Character).Position))
 							if plr.Name ~= plr.DisplayName then
-								TextLabel.Text = 'Name: '..plr.Name..' \n Display: '..plr.DisplayName..' \n Studs: '..pos
+								TextLabel.Text = plr.Name..'\n'..plr.DisplayName..'\n'..pos
 							else
-								TextLabel.Text = 'Name: '..plr.Name..' \n Studs: '..pos
+								TextLabel.Text = plr.Name..'\n'..pos
 							end
 						end
 					else
