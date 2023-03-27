@@ -43,7 +43,9 @@ local Held_Button = false
 local refreshCmd = false
 local loop_Tele = false
 local ESPenabled = false
+local Box_ESP = false
 local Tracers_Visible = false
+local Show_Data = false
 local Hide_Team = false
 local target = false
 local FLYING = false
@@ -288,12 +290,12 @@ function sFLY(vfly)
 	repeat wait() until Me and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid")
 	repeat wait() until mouse
 	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
-
+	
 	local T = getRoot(Me.Character)
 	local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 	local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 	local SPEED = 0
-
+	
 	local function FLY()
 		FLYING = true
 		local BG = Instance.new('BodyGyro')
@@ -449,20 +451,17 @@ function ESP(plr)
 		
 		if not ESPenabled then return end
 		
-		wait()
+		repeat wait() until plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
 		
-		if plr.Character and plr ~= Me and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
+		if plr ~= Me and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
 			local ESPholder = Instance.new("Folder")
 			ESPholder.Name = plr.Name..'_ESP'
 			ESPholder.Parent = COREGUI
 			
-			repeat wait() until plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
-			
-			for b,n in pairs (plr.Character:GetChildren()) do
-				if (n:IsA("BasePart")) then
+			for b,n in pairs(plr.Character:GetChildren()) do
+				if n:IsA("BasePart") then
 					local a = Instance.new("BoxHandleAdornment")
 					a.Name = plr.Name
-					a.Parent = ESPholder
 					a.Adornee = n
 					a.AlwaysOnTop = true
 					a.ZIndex = 10
@@ -473,131 +472,189 @@ function ESP(plr)
 						a.Transparency = .5
 					end
 					a.Color = plr.TeamColor
+					a.Parent = ESPholder
 				end
 			end
 			
-			if plr.Character and plr.Character:FindFirstChild('Head') then
-				local BillboardGui = Instance.new("BillboardGui")
-				BillboardGui.Adornee = plr.Character.Head
-				BillboardGui.Name = plr.Name
-				BillboardGui.Parent = ESPholder
-				BillboardGui.Size = UDim2.new(10, 0, 3, 0)
-				BillboardGui.SizeOffset = Vector2.new(0, .75)
-				BillboardGui.AlwaysOnTop = true
-				
-				local TextLabel = Instance.new("TextLabel")
-				TextLabel.BackgroundTransparency = 1
-				TextLabel.Size = UDim2.new(1, 0, 1, 0)
-				TextLabel.TextScaled = true
-				TextLabel.TextColor3 = Color3.new(1, 1, 1)
-				TextLabel.TextYAlignment = Enum.TextYAlignment.Center
-				TextLabel.Text = plr.Name
-				TextLabel.ZIndex = 10
-				
-				if Hide_Team and plr.TeamColor == Me.TeamColor then
-					TextLabel.TextTransparency = 1
-					TextLabel.TextStrokeTransparency = 1
+			local teamChange
+			local addedFunc
+			
+			addedFunc = plr.CharacterAdded:Connect(function()
+				if ESPenabled then
+					teamChange:Disconnect()
+					ESPholder:Destroy()
+					ESP(plr)
+					addedFunc:Disconnect()
 				else
-					TextLabel.TextTransparency = 0
-					TextLabel.TextStrokeTransparency = 0
+					teamChange:Disconnect()
+					addedFunc:Disconnect()
 				end
-				
-				TextLabel.Parent = BillboardGui
-				
-				local espLoopFunc
-				local teamChange
-				local addedFunc
-				
-				addedFunc = plr.CharacterAdded:Connect(function()
-					if ESPenabled then
-						espLoopFunc:Disconnect()
-						teamChange:Disconnect()
-						ESPholder:Destroy()
-						repeat wait() until getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
-						ESP(plr)
-						addedFunc:Disconnect()
-					else
-						teamChange:Disconnect()
-						addedFunc:Disconnect()
-					end
-				end)
-				
-				teamChange = plr:GetPropertyChangedSignal("TeamColor"):Connect(function()
-					if ESPenabled then
-						espLoopFunc:Disconnect()
-						addedFunc:Disconnect()
-						ESPholder:Destroy()
-						repeat wait() until getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
-						ESP(plr)
-						teamChange:Disconnect()
-					else
-						teamChange:Disconnect()
-					end
-				end)
-				
-				local function espLoop()
-					if COREGUI:FindFirstChild(plr.Name..'_ESP') then
-						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid") then
-							local pos = math.floor(Me:DistanceFromCharacter(getRoot(plr.Character).Position))
-							if plr.Name ~= plr.DisplayName then
-								TextLabel.Text = plr.Name..'\n'..plr.DisplayName..'\n'..pos
-							else
-								TextLabel.Text = plr.Name..'\n'..pos
-							end
-						end
-					else
-						teamChange:Disconnect()
-						addedFunc:Disconnect()
-						espLoopFunc:Disconnect()
-					end
+			end)
+			
+			teamChange = plr:GetPropertyChangedSignal("TeamColor"):Connect(function()
+				if ESPenabled then
+					addedFunc:Disconnect()
+					ESPholder:Destroy()
+					ESP(plr)
+					teamChange:Disconnect()
+				else
+					teamChange:Disconnect()
 				end
-				
-				espLoopFunc = RunService.RenderStepped:Connect(espLoop)
-			end
+			end)
 		end
 	end)
 end
 
---// Tracers \\--
+--// Tracers/ESP Box/Info \\--
 
-function activateTracers(Plr)
+local round = function(...) 
+	local a = {}
+	for i,v in next, table.pack(...) do
+		a[i] = math.round(v)
+	end
+	return unpack(a)
+end
+
+local wtvp = function(...)
+	local a, b = workspace.CurrentCamera.WorldToViewportPoint(workspace.CurrentCamera, ...)
+	return Vector2.new(a.X, a.Y), b, a.Z
+end
+
+local function show_Data(Obj)
+	if Obj then
+		if Activate_Data then
+			Obj.TextTransparency = 0
+			Obj.TextStrokeTransparency = 0
+		else
+			Obj.TextTransparency = 1
+			Obj.TextStrokeTransparency = 1
+		end
+	end
+end
+
+function Esp_Activation(Plr)
 	if Plr ~= Me then
+		local ESPholder = Instance.new("Folder")
+		ESPholder.Name = Plr.Name..'_Data'
+		ESPholder.Parent = COREGUI
+		
+		local BBG = Instance.new("BillboardGui")
+		BBG.Name = Plr.Name
+		BBG.Size = UDim2.new(10, 0, 3, 0)
+		BBG.SizeOffset = Vector2.new(0, .75)
+		BBG.AlwaysOnTop = true
+		BBG.Parent = ESPholder
+		
+		local TL = Instance.new("TextLabel")
+		TL.Name = "Here"
+		TL.BackgroundTransparency = 1
+		TL.Size = UDim2.new(1, 0, 1, 0)
+		TL.TextScaled = true
+		TL.TextColor3 = Color3.new(1, 1, 1)
+		TL.TextYAlignment = Enum.TextYAlignment.Center
+		TL.Text = Plr.Name
+		TL.ZIndex = 10
+		TL.Parent = BBG
+		
 		local TracerLine = Drawing.new("Line")
-
+		local TracerBox = Drawing.new("Square")
+		
 		RunService.RenderStepped:Connect(function()
 			if Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+				
+				local ESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Data")
+				local BBG
+				local TL
+				
+				if ESPfolder then
+					BBG = ESPfolder:FindFirstChild(Plr.Name)
+					if BBG then
+						TL = BBG:FindFirstChild("Here")
+					end
+				end
+				
 				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
 				local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart_Position * CFrame.new(0, -HumanoidRootPart_Size.Y, 0).p)
 				
 				TracerLine.Thickness = 1
-				TracerLine.Transparency = .5
+				TracerLine.Transparency = .7
+				TracerLine.ZIndex = 10
 				TracerLine.Color = Plr.TeamColor.Color
-
+				
+				TracerBox.Thickness = 1.5
+				TracerBox.Transparency = .7
+				TracerBox.ZIndex = 10
+				TracerBox.Color = Plr.TeamColor.Color
+				TracerBox.Filled = false
+				
 				TracerLine.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
-
-				if OnScreen then
+				
+				local cframe = Plr.Character:GetModelCFrame()
+				local position, visible, depth = wtvp(cframe.Position)
+				local scaleFactor = 1 / (depth * math.tan(math.rad(workspace.CurrentCamera.FieldOfView / 2)) * 2) * 1000
+				local width, height = round(4 * scaleFactor, 5 * scaleFactor)
+				local x, y = round(position.X, position.Y)
+				
+				if OnScreen and visible then
 					TracerLine.To = Vector2.new(Vector.X, Vector.Y)
+					TracerBox.Size = Vector2.new(width, height)
+					TracerBox.Position = Vector2.new(round(x - width / 2, y - height / 2))
+					
 					if Hide_Team then
 						if Plr.TeamColor == Me.TeamColor then
 							TracerLine.Visible = false
+							TracerBox.Visible = false
+							if TL then
+								TL.TextTransparency = 1
+								TL.TextStrokeTransparency = 1
+							end
 						else
 							TracerLine.Visible = Tracers_Visible
+							TracerBox.Visible = Box_ESP
+							if TL then
+								show_Data(TL)
+							end
 						end
 					else
 						TracerLine.Visible = Tracers_Visible
+						TracerBox.Visible = Box_ESP
+						if TL then
+							show_Data(TL)
+						end
 					end
 				else
 					TracerLine.Visible = false
+					TracerBox.Visible = false
+					if TL then
+						TL.TextTransparency = 1
+						TL.TextStrokeTransparency = 1
+					end
 				end
 			else
 				TracerLine.Visible = false
+				TracerBox.Visible = false
+				if TL then
+					TL.TextTransparency = 1
+					TL.TextStrokeTransparency = 1
+				end
+			end
+			
+			if BBG and TL then
+				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and Plr.Character:FindFirstChildOfClass("Humanoid") and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid") then
+					BBG.Adornee = Plr.Character.Head
+					local pos = math.floor(Me:DistanceFromCharacter(getRoot(Plr.Character).Position))
+					if Plr.Name ~= Plr.DisplayName then
+						TL.Text = Plr.Name..'\n'..Plr.DisplayName..'\n'..pos
+					else
+						TL.Text = Plr.Name..'\n'..pos
+					end
+				end
 			end
 		end)
-
-		Players.PlayerRemoving:Connect(function(plr)
-			if plr == v then
-				TracerLine.Visible = false
-			end
+		
+		Players.PlayerRemoving:Connect(function()
+			TracerLine.Visible = false
+			TracerBox.Visible = false
 		end)
 	end
 end
@@ -618,7 +675,7 @@ function respawn(plr)
 	local char = plr.Character
 	
 	if char:FindFirstChildOfClass("Humanoid") then
-		char:FindFirstChildOfClass("Humanoid"):ChangeState(15) 
+		char:FindFirstChildOfClass("Humanoid"):ChangeState(15)
 	end
 	
 	char:ClearAllChildren()
@@ -878,7 +935,7 @@ Title_1_Object_9 = Title_1.Button({
 	}
 })
 
---// Teleport \\--
+--// Teleport/Spy \\--
 
 Title_2_Object_1 = Title_2.Toggle({
 	Text = "Click Teleport (Hold Left Contol/Shift)",
@@ -1250,7 +1307,7 @@ Title_5_Object_6 = Title_5.Toggle({
 				Lighting.GlobalShadows = false
 				Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
 			end
-
+			
 			brightLoop = RunService.RenderStepped:Connect(brightFunc)
 		elseif not Value and brightLoop then
 			brightLoop:Disconnect()
@@ -1261,8 +1318,8 @@ Title_5_Object_6 = Title_5.Toggle({
 
 --// ESP \\--
 
-Title_1_Object_1 = Title_6.Toggle({
-	Text = "ESP",
+Title_6_Object_1 = Title_6.Toggle({
+	Text = "Body ESP",
 	Callback = function(Value)
 		ESPenabled = Value
 		
@@ -1275,7 +1332,15 @@ Title_1_Object_1 = Title_6.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_2 = Title_6.Toggle({
+Title_6_Object_2 = Title_6.Toggle({
+	Text = "Box ESP",
+	Callback = function(Value)
+		Box_ESP = Value
+	end,
+	Enabled = false
+})
+
+Title_6_Object_3 = Title_6.Toggle({
 	Text = "Tracers",
 	Callback = function(Value)
 		Tracers_Visible = Value
@@ -1283,7 +1348,15 @@ Title_1_Object_2 = Title_6.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_3 = Title_6.Toggle({
+Title_6_Object_4 = Title_6.Toggle({
+	Text = "Show Info",
+	Callback = function(Value)
+		Activate_Data = Value
+	end,
+	Enabled = false
+})
+
+Title_6_Object_5 = Title_6.Toggle({
 	Text = "Hide Team",
 	Callback = function(Value)
 		Hide_Team = Value
@@ -1329,7 +1402,7 @@ end
 
 Players.PlayerAdded:Connect(function(plr)
 	GetList()
-	activateTracers(plr)
+	Esp_Activation(plr)
 	
 	if ESPenabled then
 		repeat wait() until plr.Character and getRoot(plr.Character)
@@ -1352,10 +1425,15 @@ Players.PlayerRemoving:Connect(function(plr)
 		end
 	end
 	
+	for i,v in pairs(COREGUI:GetChildren()) do
+		if v.Name == plr.Name..'_Data' then
+			v:Destroy()
+		end
+	end
+	
 	if viewing ~= nil and plr == viewing then
 		workspace.CurrentCamera.CameraSubject = Me.Character
 		viewing = nil
-		
 		if viewDied then
 			viewDied:Disconnect()
 			viewChanged:Disconnect()
@@ -1402,6 +1480,7 @@ end)
 onDied()
 
 --// Tracers Start \\--
+
 for _, v in pairs(Players:GetPlayers()) do
-	activateTracers(v)
+	Esp_Activation(v)
 end
