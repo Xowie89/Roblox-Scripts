@@ -561,6 +561,7 @@ function Esp_Activation(Plr)
 		
 		RunService.RenderStepped:Connect(function()
 			if Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+				local Human = Plr.Character:FindFirstChildOfClass("Humanoid")
 				
 				local ESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Data")
 				local BBG
@@ -577,12 +578,12 @@ function Esp_Activation(Plr)
 				local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart_Position * CFrame.new(0, -HumanoidRootPart_Size.Y, 0).p)
 				
 				TracerLine.Thickness = 1
-				TracerLine.Transparency = .7
+				TracerLine.Transparency = .8
 				TracerLine.ZIndex = 10
 				TracerLine.Color = Plr.TeamColor.Color
 				
-				TracerBox.Thickness = 1.5
-				TracerBox.Transparency = .7
+				TracerBox.Thickness = 2
+				TracerBox.Transparency = .8
 				TracerBox.ZIndex = 10
 				TracerBox.Color = Plr.TeamColor.Color
 				TracerBox.Filled = false
@@ -595,18 +596,26 @@ function Esp_Activation(Plr)
 				local width, height = round(4 * scaleFactor, 5 * scaleFactor)
 				local x, y = round(position.X, position.Y)
 				
-				if OnScreen and visible then
-					TracerLine.To = Vector2.new(Vector.X, Vector.Y)
-					TracerBox.Size = Vector2.new(width, height)
-					TracerBox.Position = Vector2.new(round(x - width / 2, y - height / 2))
-					
-					if Hide_Team then
-						if Plr.TeamColor == Me.TeamColor then
-							TracerLine.Visible = false
-							TracerBox.Visible = false
-							if TL then
-								TL.TextTransparency = 1
-								TL.TextStrokeTransparency = 1
+				if OnScreen and visible and Human then
+					if Human.Health > 0 then
+						TracerLine.To = Vector2.new(Vector.X, Vector.Y)
+						TracerBox.Size = Vector2.new(width, height)
+						TracerBox.Position = Vector2.new(round(x - width / 2, y - height / 2))
+						
+						if Hide_Team then
+							if Plr.TeamColor == Me.TeamColor then
+								TracerLine.Visible = false
+								TracerBox.Visible = false
+								if TL then
+									TL.TextTransparency = 1
+									TL.TextStrokeTransparency = 1
+								end
+							else
+								TracerLine.Visible = Tracers_Visible
+								TracerBox.Visible = Box_ESP
+								if TL then
+									show_Data(TL)
+								end
 							end
 						else
 							TracerLine.Visible = Tracers_Visible
@@ -616,10 +625,11 @@ function Esp_Activation(Plr)
 							end
 						end
 					else
-						TracerLine.Visible = Tracers_Visible
-						TracerBox.Visible = Box_ESP
+						TracerLine.Visible = false
+						TracerBox.Visible = false
 						if TL then
-							show_Data(TL)
+							TL.TextTransparency = 1
+							TL.TextStrokeTransparency = 1
 						end
 					end
 				else
@@ -640,7 +650,7 @@ function Esp_Activation(Plr)
 			end
 			
 			if BBG and TL then
-				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and Plr.Character:FindFirstChildOfClass("Humanoid") and Me.Character and getRoot(Me.Character) and Me.Character:FindFirstChildOfClass("Humanoid") then
+				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and Me.Character and getRoot(Me.Character) then
 					BBG.Adornee = Plr.Character.Head
 					local pos = math.floor(Me:DistanceFromCharacter(getRoot(Plr.Character).Position))
 					if Plr.Name ~= Plr.DisplayName then
