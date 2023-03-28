@@ -439,73 +439,7 @@ function Unbang()
 	end
 end
 
---// ESP \\--
-
-function ESP(plr)
-	task.spawn(function()
-		for i,v in pairs(COREGUI:GetChildren()) do
-			if v.Name == plr.Name..'_ESP' then
-				v:Destroy()
-			end
-		end
-		
-		if not ESPenabled then return end
-		
-		repeat wait() until plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid")
-		
-		if plr ~= Me and not COREGUI:FindFirstChild(plr.Name..'_ESP') then
-			local ESPholder = Instance.new("Folder")
-			ESPholder.Name = plr.Name..'_ESP'
-			ESPholder.Parent = COREGUI
-			
-			for b,n in pairs(plr.Character:GetChildren()) do
-				if n:IsA("BasePart") then
-					local a = Instance.new("BoxHandleAdornment")
-					a.Name = plr.Name
-					a.Adornee = n
-					a.AlwaysOnTop = true
-					a.ZIndex = 10
-					a.Size = n.Size
-					if Hide_Team and plr.TeamColor == Me.TeamColor then
-						a.Transparency = 1
-					else
-						a.Transparency = .5
-					end
-					a.Color = plr.TeamColor
-					a.Parent = ESPholder
-				end
-			end
-			
-			local teamChange
-			local addedFunc
-			
-			addedFunc = plr.CharacterAdded:Connect(function()
-				if ESPenabled then
-					teamChange:Disconnect()
-					ESPholder:Destroy()
-					ESP(plr)
-					addedFunc:Disconnect()
-				else
-					teamChange:Disconnect()
-					addedFunc:Disconnect()
-				end
-			end)
-			
-			teamChange = plr:GetPropertyChangedSignal("TeamColor"):Connect(function()
-				if ESPenabled then
-					addedFunc:Disconnect()
-					ESPholder:Destroy()
-					ESP(plr)
-					teamChange:Disconnect()
-				else
-					teamChange:Disconnect()
-				end
-			end)
-		end
-	end)
-end
-
---// Tracers/ESP Box/Info \\--
+--// All ESP \\--
 
 local round = function(...) 
 	local a = {}
@@ -532,18 +466,35 @@ local function show_Data(Obj)
 	end
 end
 
+local function Show_Body(Plr)
+	local BodyESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Body")
+	if BodyESPfolder and Plr and #BodyESPfolder:GetChildren() > 0 then
+		for _,v in pairs(BodyESPfolder:GetChildren()) do
+			if Hide_Team and Plr.TeamColor == Me.TeamColor then
+				v.Transparency = 1
+			else
+				v.Transparency = .5
+			end
+		end
+	end
+end
+
 function Esp_Activation(Plr)
 	if Plr ~= Me then
-		local ESPholder = Instance.new("Folder")
-		ESPholder.Name = Plr.Name..'_Data'
-		ESPholder.Parent = COREGUI
+		local DataESPholder = Instance.new("Folder")
+		DataESPholder.Name = Plr.Name..'_Data'
+		DataESPholder.Parent = COREGUI
+		
+		local BodyESPholder = Instance.new("Folder")
+		BodyESPholder.Name = Plr.Name..'_Body'
+		BodyESPholder.Parent = COREGUI
 		
 		local BBG = Instance.new("BillboardGui")
 		BBG.Name = Plr.Name
 		BBG.Size = UDim2.new(10, 0, 3, 0)
 		BBG.SizeOffset = Vector2.new(0, .75)
 		BBG.AlwaysOnTop = true
-		BBG.Parent = ESPholder
+		BBG.Parent = DataESPholder
 		
 		local TL = Instance.new("TextLabel")
 		TL.Name = "Here"
@@ -563,14 +514,51 @@ function Esp_Activation(Plr)
 			if Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
 				local Human = Plr.Character:FindFirstChildOfClass("Humanoid")
 				
-				local ESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Data")
+				local DataESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Data")
+				local BodyESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Body")
 				local BBG
 				local TL
 				
-				if ESPfolder then
-					BBG = ESPfolder:FindFirstChild(Plr.Name)
+				if DataESPfolder then
+					BBG = DataESPfolder:FindFirstChild(Plr.Name)
 					if BBG then
 						TL = BBG:FindFirstChild("Here")
+					end
+				end
+				
+				local Adorned = true
+				if BodyESPfolder and ESPenabled then
+					if #BodyESPfolder:GetChildren() == 0 then
+						Adorned = false
+					else
+						for _,v in pairs(BodyESPfolder:GetChildren()) do
+							if not v.Adornee or v.Adornee.Parent == nil then
+								Adorned = false
+								v:Destroy()
+							end
+						end
+					end
+					
+					if not Adorned and Plr.Character and getRoot(Plr.Character) then
+						for _,v in pairs(Plr.Character:GetChildren()) do
+							if v:IsA("BasePart") then
+								local a = Instance.new("BoxHandleAdornment")
+								a.Name = v.Name
+								a.Adornee = v
+								a.AlwaysOnTop = true
+								a.ZIndex = 10
+								a.Size = v.Size
+								a.Transparency = .5
+								a.Color = Plr.TeamColor
+								a.Parent = BodyESPfolder
+							end
+						end
+					end
+				elseif BodyESPfolder and not ESPenabled then
+					if #BodyESPfolder:GetChildren() > 0 then
+						for _,v in pairs(BodyESPfolder:GetChildren()) do
+							v:Destroy()
+						end
 					end
 				end
 				
@@ -606,27 +594,37 @@ function Esp_Activation(Plr)
 							if Plr.TeamColor == Me.TeamColor then
 								TracerLine.Visible = false
 								TracerBox.Visible = false
+								
 								if TL then
 									TL.TextTransparency = 1
 									TL.TextStrokeTransparency = 1
 								end
+								
+								Show_Body(Plr)
 							else
 								TracerLine.Visible = Tracers_Visible
 								TracerBox.Visible = Box_ESP
+								
 								if TL then
 									show_Data(TL)
 								end
+								
+								Show_Body(Plr)
 							end
 						else
 							TracerLine.Visible = Tracers_Visible
 							TracerBox.Visible = Box_ESP
+							
 							if TL then
 								show_Data(TL)
 							end
+							
+							Show_Body(Plr)
 						end
 					else
 						TracerLine.Visible = false
 						TracerBox.Visible = false
+						
 						if TL then
 							TL.TextTransparency = 1
 							TL.TextStrokeTransparency = 1
@@ -635,6 +633,7 @@ function Esp_Activation(Plr)
 				else
 					TracerLine.Visible = false
 					TracerBox.Visible = false
+					
 					if TL then
 						TL.TextTransparency = 1
 						TL.TextStrokeTransparency = 1
@@ -643,6 +642,7 @@ function Esp_Activation(Plr)
 			else
 				TracerLine.Visible = false
 				TracerBox.Visible = false
+				
 				if TL then
 					TL.TextTransparency = 1
 					TL.TextStrokeTransparency = 1
@@ -652,6 +652,7 @@ function Esp_Activation(Plr)
 			if BBG and TL then
 				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and Me.Character and getRoot(Me.Character) then
 					BBG.Adornee = Plr.Character.Head
+					
 					local pos = math.floor(Me:DistanceFromCharacter(getRoot(Plr.Character).Position))
 					if Plr.Name ~= Plr.DisplayName then
 						TL.Text = Plr.Name..'\n'..Plr.DisplayName..'\n'..pos
@@ -1332,12 +1333,6 @@ Title_6_Object_1 = Title_6.Toggle({
 	Text = "Body ESP",
 	Callback = function(Value)
 		ESPenabled = Value
-		
-		for i,v in pairs(Players:GetPlayers()) do
-			if v ~= Me then
-				ESP(v)
-			end
-		end
 	end,
 	Enabled = false
 })
@@ -1370,12 +1365,6 @@ Title_6_Object_5 = Title_6.Toggle({
 	Text = "Hide Team",
 	Callback = function(Value)
 		Hide_Team = Value
-		
-		for i,v in pairs(Players:GetPlayers()) do
-			if v ~= Me then
-				ESP(v)
-			end
-		end
 	end,
 	Enabled = false
 })
@@ -1427,16 +1416,8 @@ end)
 Players.PlayerRemoving:Connect(function(plr)
 	GetList()
 	
-	if ESPenabled then
-		for i,v in pairs(COREGUI:GetChildren()) do
-			if v.Name == plr.Name..'_ESP' then
-				v:Destroy()
-			end
-		end
-	end
-	
 	for i,v in pairs(COREGUI:GetChildren()) do
-		if v.Name == plr.Name..'_Data' then
+		if v.Name == plr.Name..'_Data' or v.Name == plr.Name..'_Body' then
 			v:Destroy()
 		end
 	end
@@ -1489,7 +1470,7 @@ end)
 
 onDied()
 
---// Tracers Start \\--
+--// ESP Main Start \\--
 
 for _, v in pairs(Players:GetPlayers()) do
 	Esp_Activation(v)
