@@ -582,7 +582,9 @@ function Esp_Activation(Plr)
 				
 				if HL then
 					if not HL.Adornee or HL.Adornee.Parent == nil then
-						HL.Adornee = Plr.Character
+						if Plr.Character then
+							HL.Adornee = Plr.Character
+						end
 					end
 					HL.OutlineColor = Plr.TeamColor.Color
 				end
