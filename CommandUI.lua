@@ -40,6 +40,7 @@ local vehicleflyspeed = 1
 local iyflyspeed = 1
 local spinSpeed = 20
 local Tracers_Visible = false
+local Highlight_ESP = false
 local Held_Button = false
 local refreshCmd = false
 local ESPenabled = false
@@ -490,6 +491,10 @@ function Esp_Activation(Plr)
 		BodyESPholder.Name = Plr.Name..'_Body'
 		BodyESPholder.Parent = COREGUI
 		
+		local HighlightESPholder = Instance.new("Folder")
+		HighlightESPholder.Name = Plr.Name..'_Highlight'
+		HighlightESPholder.Parent = COREGUI
+		
 		local BBG = Instance.new("BillboardGui")
 		BBG.Name = Plr.Name
 		BBG.Size = UDim2.new(8, 0, 3, 0)
@@ -508,6 +513,12 @@ function Esp_Activation(Plr)
 		TL.ZIndex = 10
 		TL.Parent = BBG
 		
+		local Highlight = Instance.new("Highlight")
+		Highlight.FillTransparency = 1
+		Highlight.Enabled = Highlight_ESP
+		Highlight.DepthMode = "AlwaysOnTop"
+		Highlight.Parent = HighlightESPholder
+		
 		local TracerLine = Drawing.new("Line")
 		local TracerBox = Drawing.new("Square")
 		
@@ -517,6 +528,8 @@ function Esp_Activation(Plr)
 				
 				local DataESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Data")
 				local BodyESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Body")
+				local HighlightESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Highlight")
+				local HL
 				local BBG
 				local TL
 				
@@ -525,6 +538,10 @@ function Esp_Activation(Plr)
 					if BBG then
 						TL = BBG:FindFirstChild("Here")
 					end
+				end
+				
+				if HighlightESPfolder then
+					HL = HighlightESPfolder:FindFirstChild("Highlight")
 				end
 				
 				local Adorned = true
@@ -561,6 +578,13 @@ function Esp_Activation(Plr)
 							v:Destroy()
 						end
 					end
+				end
+				
+				if HL then
+					if not HL.Adornee or HL.Adornee.Parent == nil then
+						HL.Adornee = Plr.Character
+					end
+					HL.OutlineColor = Plr.TeamColor.Color
 				end
 				
 				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
@@ -602,6 +626,10 @@ function Esp_Activation(Plr)
 								end
 								
 								Show_Body(Plr)
+								
+								if HL then
+									HL.Enabled = false
+								end
 							else
 								TracerLine.Visible = Tracers_Visible
 								TracerBox.Visible = Box_ESP
@@ -611,6 +639,10 @@ function Esp_Activation(Plr)
 								end
 								
 								Show_Body(Plr)
+								
+								if HL then
+									HL.Enabled = Highlight_ESP
+								end
 							end
 						else
 							TracerLine.Visible = Tracers_Visible
@@ -621,6 +653,10 @@ function Esp_Activation(Plr)
 							end
 							
 							Show_Body(Plr)
+							
+							if HL then
+								HL.Enabled = Highlight_ESP
+							end
 						end
 					else
 						TracerLine.Visible = false
@@ -629,6 +665,10 @@ function Esp_Activation(Plr)
 						if TL then
 							TL.TextTransparency = 1
 							TL.TextStrokeTransparency = 1
+						end
+						
+						if HL then
+							HL.Enabled = false
 						end
 					end
 				else
@@ -639,6 +679,10 @@ function Esp_Activation(Plr)
 						TL.TextTransparency = 1
 						TL.TextStrokeTransparency = 1
 					end
+					
+					if HL then
+						HL.Enabled = false
+					end
 				end
 			else
 				TracerLine.Visible = false
@@ -647,6 +691,10 @@ function Esp_Activation(Plr)
 				if TL then
 					TL.TextTransparency = 1
 					TL.TextStrokeTransparency = 1
+				end
+				
+				if HL then
+					HL.Enabled = false
 				end
 			end
 			
@@ -823,7 +871,7 @@ Title_1_Object_3 = Title_1.Toggle({
 				gravReset:Disconnect()
 			end
 			
-			if swimbeat ~= nil then
+			if swimbeat then
 				swimbeat:Disconnect()
 				swimbeat = nil
 			end
@@ -1347,6 +1395,14 @@ Title_6_Object_2 = Title_6.Toggle({
 })
 
 Title_6_Object_3 = Title_6.Toggle({
+	Text = "Highlight ESP",
+	Callback = function(Value)
+		Highlight_ESP = Value
+	end,
+	Enabled = false
+})
+
+Title_6_Object_4 = Title_6.Toggle({
 	Text = "Tracers",
 	Callback = function(Value)
 		Tracers_Visible = Value
@@ -1354,7 +1410,7 @@ Title_6_Object_3 = Title_6.Toggle({
 	Enabled = false
 })
 
-Title_6_Object_4 = Title_6.Toggle({
+Title_6_Object_5 = Title_6.Toggle({
 	Text = "Show Info",
 	Callback = function(Value)
 		Activate_Data = Value
@@ -1362,7 +1418,7 @@ Title_6_Object_4 = Title_6.Toggle({
 	Enabled = false
 })
 
-Title_6_Object_5 = Title_6.Toggle({
+Title_6_Object_6 = Title_6.Toggle({
 	Text = "Hide Team",
 	Callback = function(Value)
 		Hide_Team = Value
@@ -1370,7 +1426,7 @@ Title_6_Object_5 = Title_6.Toggle({
 	Enabled = false
 })
 --[[
-Title_6_Object_6 = Title_6.Toggle({
+Title_6_Object_7 = Title_6.Toggle({
 	Text = "Aim Bot",
 	Callback = function(Value)
 		AimBot = Value
@@ -1417,7 +1473,7 @@ Players.PlayerRemoving:Connect(function(Plr)
 	GetList()
 	
 	for i,v in pairs(COREGUI:GetChildren()) do
-		if v.Name == Plr.Name..'_Data' or v.Name == Plr.Name..'_Body' then
+		if v.Name == Plr.Name..'_Data' or v.Name == Plr.Name..'_Body' or v.Name == Plr.Name.."_Highlight" then
 			v:Destroy()
 		end
 	end
@@ -1458,6 +1514,10 @@ UserInputService.InputEnded:Connect(function(key, gp)
 	end
 end)
 
+--// Settings Lock \\--
+
+settingsLock = false
+
 --// Aim Bot \\--
 --[[
 Mouse.Button2Down:Connect(function()
@@ -1476,8 +1536,6 @@ RunService.RenderStepped:Connect(function()
 	end
 end
 ]]
-settingsLock = false
-
 --// Respawn \\--
 
 My_Player.CharacterAdded:Connect(function(char)
