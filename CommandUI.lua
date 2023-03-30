@@ -38,8 +38,11 @@ local setsimulation = setsimulationradius or set_simulation_radius
 
 local temp_List = {"Player", "List", "Will", "Replace", "This"}
 
-local My_Player = Players.LocalPlayer
-local Mouse = My_Player:GetMouse()
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+local RequiredDistance, Typing, Running, ServiceConnections, Animation, OriginalSensitivity = 2000, false, false, {}
 
 getgenv().CommandUI = {
 	Player_Variables = {
@@ -96,6 +99,14 @@ getgenv().CommandUI = {
 	},
 	
 	Aimbot_Variables = {
+		FOVCircle = Drawingnew("Circle"),
+		LockedColor = Color3fromRGB(255, 0, 0),
+		Color = Color3fromRGB(255, 255, 255),
+		LockPart = "HumanoidRootPart",
+		TriggerKey = "MouseButton2",
+		Third_Person = false,
+		Team_Check = true,
+		Wall_Check = true,
 		Aiming = false,
 		Aimbot = false
 	}
@@ -114,7 +125,7 @@ local espVariables = Environment.ESP_Variables
 
 local GC = getconnections or get_signal_cons
 if GC then
-	for i,v in pairs(GC(My_Player.Idled)) do
+	for i,v in pairs(GC(LocalPlayer.Idled)) do
 		if v["Disable"] then
 			v["Disable"](v)
 		elseif v["Disconnect"] then
@@ -122,7 +133,7 @@ if GC then
 		end
 	end
 else
-	My_Player.Idled:Connect(function()
+	LocalPlayer.Idled:Connect(function()
 		VirtualUser:CaptureController()
 		VirtualUser:ClickButton2(Vector2new())
 	end)
@@ -161,8 +172,8 @@ end
 --// Functions \\--
 
 function GetUp()
-	if My_Player.Character:FindFirstChildOfClass('Humanoid') and My_Player.Character:FindFirstChildOfClass('Humanoid').SeatPart then
-		My_Player.Character:FindFirstChildOfClass('Humanoid').Sit = false
+	if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').SeatPart then
+		LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = false
 		wait(.1)
 	end
 end
@@ -179,8 +190,103 @@ function r15(Plr)
 end
 
 function getTorso(x)
-	x = x or My_Player.Character
+	x = x or LocalPlayer.Character
 	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
+end
+
+--// Aimbot Functions \\--
+
+local function ConvertVector(Vector)
+	return Vector2new(Vector.X, Vector.Y)
+end
+
+local function CancelLock()
+	aimbotVariables.Locked = nil
+	aimbotVariables.FOVCircle.Color = aimbotVariables.Color
+	UserInputService.MouseDeltaSensitivity = OriginalSensitivity
+
+	if Animation then
+		Animation:Cancel()
+	end
+end
+
+local function GetClosestPlayer()
+	if not aimbotVariables.Locked then
+		RequiredDistance = 120
+
+		for _, v in next, Players:GetPlayers() do
+			if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(aimbotVariables.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
+				if aimbotVariables.Team_Check and v.TeamColor == LocalPlayer.TeamColor then continue end
+				if v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+				if aimbotVariables.Wall_Check and #(Camera:GetPartsObscuringTarget({v.Character[aimbotVariables.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+
+				local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[aimbotVariables.LockPart].Position); Vector = ConvertVector(Vector)
+				local Distance = (UserInputService:GetMouseLocation() - Vector).Magnitude
+
+				if Distance < RequiredDistance and OnScreen then
+					RequiredDistance = Distance
+					aimbotVariables.Locked = v
+				end
+			end
+		end
+	elseif (UserInputService:GetMouseLocation() - ConvertVector(Camera:WorldToViewportPoint(aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position))).Magnitude > RequiredDistance then
+		CancelLock()
+	end
+end
+
+local function Load()
+	OriginalSensitivity = UserInputService.MouseDeltaSensitivity
+
+	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
+		if aimbotVariables.Aimbot then
+			aimbotVariables.FOVCircle.Radius = 120
+			aimbotVariables.FOVCircle.Thickness = 1
+			aimbotVariables.FOVCircle.Filled = false
+			aimbotVariables.FOVCircle.NumSides = 60
+			aimbotVariables.FOVCircle.Color = aimbotVariables.Color
+			aimbotVariables.FOVCircle.Transparency = .5
+			aimbotVariables.FOVCircle.Visible = aimbotVariables.Aimbot
+			aimbotVariables.FOVCircle.Position = Vector2new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+		else
+			aimbotVariables.FOVCircle.Visible = false
+		end
+
+		if Running and aimbotVariables.Aimbot then
+			GetClosestPlayer()
+
+			if aimbotVariables.Locked then
+				if aimbotVariables.Third_Person then
+					local Vector = Camera:WorldToViewportPoint(aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position)
+					mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * 1, (Vector.Y - UserInputService:GetMouseLocation().Y) * 1)
+				else
+					Camera.CFrame = CFramenew(Camera.CFrame.Position, aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position)
+					UserInputService.MouseDeltaSensitivity = 0
+				end
+
+				aimbotVariables.FOVCircle.Color = aimbotVariables.LockedColor
+			end
+		end
+	end)
+
+	ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(Input)
+		if not Typing then
+			pcall(function()
+				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Enum.KeyCode[#aimbotVariables.TriggerKey == 1 and stringupper(aimbotVariables.TriggerKey) or aimbotVariables.TriggerKey] or Input.UserInputType == Enum.UserInputType[aimbotVariables.TriggerKey] then
+					Running = true
+				end
+			end)
+		end
+	end)
+
+	ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
+		if not Typing then
+			pcall(function()
+				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Enum.KeyCode[#aimbotVariables.TriggerKey == 1 and stringupper(aimbotVariables.TriggerKey) or aimbotVariables.TriggerKey] or Input.UserInputType == Enum.UserInputType[aimbotVariables.TriggerKey] then
+					Running = false; CancelLock()
+				end
+			end)
+		end
+	end)
 end
 
 --// Shrink \\--
@@ -189,11 +295,11 @@ local shrink = function()
 	task.spawn(function()
 		wait(3)
 		local suc, err = pcall(function()
-			local Hum = My_Player.Character:FindFirstChild("Humanoid")
-			if Hum and r15(My_Player) then
+			local Hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+			if Hum and r15(LocalPlayer) then
 			
 				local function rm()
-					for _, v in pairs(My_Player.Character:GetDescendants()) do
+					for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
 						if v:IsA("BasePart") then
 							if v.Name ~= "Head" then
 								for _, cav in pairs(v:GetDescendants()) do
@@ -270,7 +376,7 @@ local function ServerHop()
 	local searched = false
 	local pid = game.PlaceId
 	local Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
-	My_Player:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
+	LocalPlayer:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
 	task.spawn(function()
 		repeat
 			if searched then
@@ -305,7 +411,7 @@ function Tele(Plr)
 				tPlr = Players:FindFirstChild(Plr)
 			end
 			if tPlr then
-				local myChar = My_Player.Character
+				local myChar = LocalPlayer.Character
 				local tChar = tPlr.Character
 				if myChar and tChar then
 					local myRoot = myChar:FindFirstChild("HumanoidRootPart")
@@ -324,7 +430,7 @@ end
 function getPlayers()
 	local Plrs = {}
 	for _,v in pairs(Players:GetPlayers()) do
-		if v ~= My_Player then
+		if v ~= LocalPlayer then
 			if v.Name ~= v.DisplayName then
 				table.insert(Plrs, v.Name.." - "..v.DisplayName)
 			else
@@ -338,10 +444,10 @@ end
 --// Fly \\--
 
 function sFLY(vfly)
-	repeat wait() until My_Player.Character and getRoot(My_Player.Character) and My_Player.Character:FindFirstChildOfClass("Humanoid")
+	repeat wait() until LocalPlayer.Character and getRoot(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
 	
-	local T = getRoot(My_Player.Character)
+	local T = getRoot(LocalPlayer.Character)
 	local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 	local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 	local SPEED = 0
@@ -360,8 +466,8 @@ function sFLY(vfly)
 		
 		task.spawn(function()
 			repeat wait()
-				if not vfly and My_Player.Character:FindFirstChildOfClass('Humanoid') then
-					My_Player.Character:FindFirstChildOfClass('Humanoid').PlatformStand = true
+				if not vfly and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+					LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = true
 				end
 				
 				if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
@@ -371,15 +477,15 @@ function sFLY(vfly)
 				end
 				
 				if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
-					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFramenew(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					BV.velocity = ((Camera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((Camera.CoordinateFrame * CFramenew(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - Camera.CoordinateFrame.p)) * SPEED
 					lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
 				elseif (CONTROL.L + CONTROL.R) == 0 and (CONTROL.F + CONTROL.B) == 0 and (CONTROL.Q + CONTROL.E) == 0 and SPEED ~= 0 then
-					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFramenew(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					BV.velocity = ((Camera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((Camera.CoordinateFrame * CFramenew(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - Camera.CoordinateFrame.p)) * SPEED
 				else
 					BV.velocity = Vector3.new(0, 0, 0)
 				end
 				
-				BG.cframe = workspace.CurrentCamera.CoordinateFrame
+				BG.cframe = Camera.CoordinateFrame
 			until not flyVariables.FLYING
 			
 			CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
@@ -388,8 +494,8 @@ function sFLY(vfly)
 			BG:Destroy()
 			BV:Destroy()
 			
-			if My_Player.Character:FindFirstChildOfClass('Humanoid') then
-				My_Player.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+			if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+				LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
 			end
 		end)
 	end
@@ -409,7 +515,7 @@ function sFLY(vfly)
 			CONTROL.E = - (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed) * 2
 		end
 		
-		pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
+		pcall(function() Camera.CameraType = Enum.CameraType.Track end)
 	end)
 	
 	flyKeyUp = Mouse.KeyUp:Connect(function(KEY)
@@ -434,13 +540,13 @@ function NOFLY()
 	flyVariables.FLYING = false
 	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
 	
-	if My_Player.Character then
-		if My_Player.Character:FindFirstChildOfClass('Humanoid') then
-			My_Player.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+	if LocalPlayer.Character then
+		if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
 		end
 	end
 	
-	pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
+	pcall(function() Camera.CameraType = Enum.CameraType.Custom end)
 end
 
 --// Bang \\--
@@ -452,18 +558,18 @@ function Bang(Plr)
 	if tPlr then
 	
 		playerVariables.bangAnim = Instance.new("Animation")
-		if not r15(My_Player) then
+		if not r15(LocalPlayer) then
 			playerVariables.bangAnim.AnimationId = "rbxassetid://148840371"
 		else
 			playerVariables.bangAnim.AnimationId = "rbxassetid://5918726674"
 		end
 		
-		bang = My_Player.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(playerVariables.bangAnim)
+		bang = LocalPlayer.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(playerVariables.bangAnim)
 		bang:Play(.1, 1, 1)
 		bang:AdjustSpeed(3)
 		
 		local bangplr = tPlr
-		playerVariables.bangDied = My_Player.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
+		playerVariables.bangDied = LocalPlayer.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
 			playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
 			bang:Stop()
 			playerVariables.bangAnim:Destroy()
@@ -474,7 +580,7 @@ function Bang(Plr)
 		playerVariables.bangLoop = RunService.Stepped:Connect(function()
 			pcall(function()
 				local otherRoot = getTorso(tPlr.Character)
-				getRoot(My_Player.Character).CFrame = otherRoot.CFrame * bangOffet
+				getRoot(LocalPlayer.Character).CFrame = otherRoot.CFrame * bangOffet
 			end)
 		end)
 	end
@@ -500,7 +606,7 @@ local round = function(...)
 end
 
 local wtvp = function(...)
-	local a, b = workspace.CurrentCamera.WorldToViewportPoint(workspace.CurrentCamera, ...)
+	local a, b = Camera.WorldToViewportPoint(Camera, ...)
 	return Vector2new(a.X, a.Y), b, a.Z
 end
 
@@ -520,7 +626,7 @@ local function Show_Body(Plr)
 	local BodyESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Body")
 	if BodyESPfolder and Plr and #BodyESPfolder:GetChildren() > 0 then
 		for _,v in pairs(BodyESPfolder:GetChildren()) do
-			if espVariables.Hide_Team and Plr.TeamColor == My_Player.TeamColor then
+			if espVariables.Hide_Team and Plr.TeamColor == LocalPlayer.TeamColor then
 				v.Transparency = 1
 			else
 				v.Transparency = .25
@@ -530,7 +636,7 @@ local function Show_Body(Plr)
 end
 
 function Esp_Activation(Plr)
-	if Plr ~= My_Player then
+	if Plr ~= LocalPlayer then
 		local DataESPholder = Instance.new("Folder")
 		DataESPholder.Name = Plr.Name..'_Data'
 		DataESPholder.Parent = COREGUI
@@ -582,11 +688,11 @@ function Esp_Activation(Plr)
 				local TL
 				
 				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
-				local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart_Position * CFramenew(0, -HumanoidRootPart_Size.Y, 0).p)
+				local Vector, OnScreen = Camera:WorldToViewportPoint(HumanoidRootPart_Position * CFramenew(0, -HumanoidRootPart_Size.Y, 0).p)
 				
 				local cframe = Plr.Character:GetModelCFrame()
 				local position, visible, depth = wtvp(cframe.Position)
-				local scaleFactor = 1 / (depth * mathTan(mathRad(workspace.CurrentCamera.FieldOfView / 2)) * 2) * 1000
+				local scaleFactor = 1 / (depth * mathTan(mathRad(Camera.FieldOfView / 2)) * 2) * 1000
 				local width, height = round(4 * scaleFactor, 5 * scaleFactor)
 				local x, y = round(position.X, position.Y)
 				
@@ -601,7 +707,7 @@ function Esp_Activation(Plr)
 				TracerBox.Color = Plr.TeamColor.Color
 				TracerBox.Filled = false
 				
-				TracerLine.From = Vector2new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+				TracerLine.From = Vector2new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
 				
 				if DataESPfolder then
 					BBG = DataESPfolder:FindFirstChild(Plr.Name)
@@ -665,7 +771,7 @@ function Esp_Activation(Plr)
 						TracerBox.Position = Vector2new(round(x - width / 2, y - height / 2))
 						
 						if espVariables.Hide_Team then
-							if Plr.TeamColor == My_Player.TeamColor then
+							if Plr.TeamColor == LocalPlayer.TeamColor then
 								TracerLine.Visible = false
 								TracerBox.Visible = false
 								
@@ -748,10 +854,10 @@ function Esp_Activation(Plr)
 			end
 			
 			if BBG and TL then
-				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and My_Player.Character and getRoot(My_Player.Character) then
+				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and LocalPlayer.Character and getRoot(LocalPlayer.Character) then
 					BBG.Adornee = Plr.Character.Head
 					
-					local pos = mathFloor(My_Player:DistanceFromCharacter(getRoot(Plr.Character).Position))
+					local pos = mathFloor(LocalPlayer:DistanceFromCharacter(getRoot(Plr.Character).Position))
 					if Plr.Name ~= Plr.DisplayName then
 						TL.Text = '@'..Plr.Name..'\n['..Plr.DisplayName..']\n('..pos..')'
 					else
@@ -801,12 +907,12 @@ function refresh(Plr)
 	playerVariables.refreshCmd = true
 	local Human = Plr.Character and Plr.Character:FindFirstChildOfClass("Humanoid", true)
 	local pos = Human and Human.RootPart and Human.RootPart.CFrame
-	local pos1 = workspace.CurrentCamera.CFrame
+	local pos1 = Camera.CFrame
 	
 	respawn(Plr)
 	
 	task.spawn(function()
-		Plr.CharacterAdded:Wait():WaitForChild("Humanoid").RootPart.CFrame, workspace.CurrentCamera.CFrame = pos, wait() and pos1
+		Plr.CharacterAdded:Wait():WaitForChild("Humanoid").RootPart.CFrame, Camera.CFrame = pos, wait() and pos1
 		playerVariables.refreshCmd = false
 	end)
 end
@@ -866,8 +972,8 @@ Title_1_Object_2 = Title_1.Toggle({
 	Callback = function(Value)
 		if Value then
 			local function NoclipLoop()
-				if My_Player.Character ~= nil then
-					for _, child in pairs(My_Player.Character:GetDescendants()) do
+				if LocalPlayer.Character ~= nil then
+					for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
 						if child:IsA("BasePart") and child.CanCollide == true and child.Name ~= floatName then
 							child.CanCollide = false
 						end
@@ -885,62 +991,10 @@ Title_1_Object_2 = Title_1.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_3 = Title_1.Toggle({
-	Text = "Swim",
-	Callback = function(Value)
-		if Value and My_Player and My_Player.Character and My_Player.Character:FindFirstChildWhichIsA("Humanoid") then
-			flyVariables.Old_Grav = workspace.Gravity
-			workspace.Gravity = 0
-			
-			local swimDied = function()
-				workspace.Gravity = flyVariables.Old_Grav
-			end
-			
-			local Humanoid = My_Player.Character:FindFirstChildWhichIsA("Humanoid")
-			gravReset = Humanoid.Died:Connect(swimDied)
-			
-			local enums = Enum.HumanoidStateType:GetEnumItems()
-			table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
-			
-			for i, v in pairs(enums) do
-				Humanoid:SetStateEnabled(v, false)
-			end
-			
-			Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-			
-			playerVariables.swimbeat = RunService.Heartbeat:Connect(function()
-				pcall(function()
-					My_Player.Character.HumanoidRootPart.Velocity = ((Humanoid.MoveDirection ~= Vector3.new() or UserInputService:IsKeyDown(Enum.KeyCode.Space)) and My_Player.Character.HumanoidRootPart.Velocity or Vector3.new())
-				end)
-			end)
-		elseif not Value and My_Player and My_Player.Character and My_Player.Character:FindFirstChildWhichIsA("Humanoid") then
-			workspace.Gravity = flyVariables.Old_Grav
-			
-			if gravReset then
-				gravReset:Disconnect()
-			end
-			
-			if playerVariables.swimbeat then
-				playerVariables.swimbeat:Disconnect()
-				playerVariables.swimbeat = nil
-			end
-			
-			local Humanoid = My_Player.Character:FindFirstChildWhichIsA("Humanoid")
-			local enums = Enum.HumanoidStateType:GetEnumItems()
-			table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
-			
-			for i, v in pairs(enums) do
-				Humanoid:SetStateEnabled(v, true)
-			end
-		end
-	end,
-	Enabled = false
-})
-
-Title_1_Object_4 = Title_1.Button({
+Title_1_Object_3 = Title_1.Button({
 	Text = "Lay",
 	Callback = function(Value)
-		local Human = My_Player.Character and My_Player.Character:FindFirstChildOfClass('Humanoid')
+		local Human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
 		if not Human then
 			return
 		end
@@ -962,10 +1016,10 @@ Title_1_Object_4 = Title_1.Button({
 	}
 })
 
-Title_1_Object_5 = Title_1.Button({
+Title_1_Object_4 = Title_1.Button({
 	Text = "Respawn",
 	Callback = function(Value)
-		respawn(My_Player)
+		respawn(LocalPlayer)
 	end,
 	Menu = {
 		Info = function(self)
@@ -976,10 +1030,10 @@ Title_1_Object_5 = Title_1.Button({
 	}
 })
 
-Title_1_Object_6 = Title_1.Button({
+Title_1_Object_5 = Title_1.Button({
 	Text = "Refresh",
 	Callback = function(Value)
-		refresh(My_Player)
+		refresh(LocalPlayer)
 	end,
 	Menu = {
 		Info = function(self)
@@ -990,11 +1044,11 @@ Title_1_Object_6 = Title_1.Button({
 	}
 })
 
-Title_1_Object_7 = Title_1.Slider({
+Title_1_Object_6 = Title_1.Slider({
 	Text = "Spin Speed",
 	Callback = function(Value)
 		playerVariables.spinSpeed = Value
-		for i,v in pairs(getRoot(My_Player.Character):GetChildren()) do
+		for i,v in pairs(getRoot(LocalPlayer.Character):GetChildren()) do
 			if v.Name == "Spinning" then
 				v.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
 			end
@@ -1005,17 +1059,17 @@ Title_1_Object_7 = Title_1.Slider({
 	Def = 20
 })
 
-Title_1_Object_8 = Title_1.Toggle({
+Title_1_Object_7 = Title_1.Toggle({
 	Text = "Spin",
 	Callback = function(Value)
 		if Value then
 			local Spin = Instance.new("BodyAngularVelocity")
 			Spin.Name = "Spinning"
-			Spin.Parent = getRoot(My_Player.Character)
+			Spin.Parent = getRoot(LocalPlayer.Character)
 			Spin.MaxTorque = Vector3.new(0, math.huge, 0)
 			Spin.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
-		elseif not Value and My_Player.Character then
-			for i,v in pairs(getRoot(My_Player.Character):GetChildren()) do
+		elseif not Value and LocalPlayer.Character then
+			for i,v in pairs(getRoot(LocalPlayer.Character):GetChildren()) do
 				if v.Name == "Spinning" then
 					v:Destroy()
 				end
@@ -1025,11 +1079,11 @@ Title_1_Object_8 = Title_1.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_9 = Title_1.Button({
+Title_1_Object_8 = Title_1.Button({
 	Text = "Split",
 	Callback = function(Value)
-		if r15(My_Player) then
-			local waist = My_Player.Character.UpperTorso:FindFirstChild("Waist")
+		if r15(LocalPlayer) then
+			local waist = LocalPlayer.Character.UpperTorso:FindFirstChild("Waist")
 			if waist then
 				waist:Destroy()
 			end
@@ -1059,11 +1113,11 @@ Title_2_Object_2 = Title_2.Button({
 	Text = "Flashback",
 	Callback = function(Value)
 		if playerVariables.lastDeath then
-			if My_Player.Character:FindFirstChildOfClass('Humanoid') and My_Player.Character:FindFirstChildOfClass('Humanoid').SeatPart then
-				My_Player.Character:FindFirstChildOfClass('Humanoid').Sit = false
+			if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').SeatPart then
+				LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = false
 				wait(.1)
 			end
-			getRoot(My_Player.Character).CFrame = playerVariables.lastDeath
+			getRoot(LocalPlayer.Character).CFrame = playerVariables.lastDeath
 		end
 	end,
 	Menu = {
@@ -1109,7 +1163,7 @@ Title_2_Object_5 = Title_2.Button({
 			viewChanged:Disconnect()
 		end
 		
-		workspace.CurrentCamera.CameraSubject = My_Player.Character
+		Camera.CameraSubject = LocalPlayer.Character
 	end,
 	Menu = {
 		Info = function(self)
@@ -1134,20 +1188,20 @@ Title_2_Object_6 = Title_2.Dropdown({
 			end
 			
 			playerVariables.viewing = tPlr
-			workspace.CurrentCamera.CameraSubject = playerVariables.viewing.Character
+			Camera.CameraSubject = playerVariables.viewing.Character
 			
 			local function viewDiedFunc()
 				repeat wait() until playerVariables.viewing.Character and getRoot(playerVariables.viewing.Character)
-				workspace.CurrentCamera.CameraSubject = playerVariables.viewing.Character
+				Camera.CameraSubject = playerVariables.viewing.Character
 			end
 			
 			viewDied = playerVariables.viewing.CharacterAdded:Connect(viewDiedFunc)
 			
 			local function viewChangedFunc()
-				workspace.CurrentCamera.CameraSubject = playerVariables.viewing.Character
+				Camera.CameraSubject = playerVariables.viewing.Character
 			end
 			
-			viewChanged = workspace.CurrentCamera:GetPropertyChangedSignal("CameraSubject"):Connect(viewChangedFunc)
+			viewChanged = Camera:GetPropertyChangedSignal("CameraSubject"):Connect(viewChangedFunc)
 		end
 	end,
 	Options = temp_List
@@ -1163,11 +1217,11 @@ Title_2_Object_7 = Title_2.Dropdown({
 				headSit:Disconnect() 
 			end
 			
-			My_Player.Character:FindFirstChildOfClass('Humanoid').Sit = true
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = true
 			
 			headSit = RunService.Heartbeat:Connect(function()
-				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(My_Player.Character) and My_Player.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(My_Player.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(0), 0) * CFramenew(0, 1.6, .5)
+				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit == true then
+					getRoot(LocalPlayer.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(0), 0) * CFramenew(0, 1.6, .5)
 				else
 					headSit:Disconnect()
 				end
@@ -1217,11 +1271,11 @@ Title_3_Object_4 = Title_3.Button({
 	Text = "Rejoin",
 	Callback = function(Value)
 		if #Players:GetPlayers() <= 1 then
-			My_Player:Kick("\nRejoining...")
+			LocalPlayer:Kick("\nRejoining...")
 			wait()
-			TeleportService:Teleport(game.PlaceId, My_Player)
+			TeleportService:Teleport(game.PlaceId, LocalPlayer)
 		else
-			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, My_Player)
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 		end
 	end,
 	Menu = {
@@ -1314,11 +1368,11 @@ Title_4_Object_7 = Title_4.Dropdown({
 				headSit:Disconnect()
 			end
 			
-			My_Player.Character:FindFirstChildOfClass('Humanoid').Sit = true
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = true
 			
 			headSit = RunService.Heartbeat:Connect(function()
-				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(My_Player.Character) and My_Player.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(My_Player.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(180), 0) * CFramenew(0, 1.25, 1)
+				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit == true then
+					getRoot(LocalPlayer.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(180), 0) * CFramenew(0, 1.25, 1)
 				else
 					headSit:Disconnect()
 				end
@@ -1326,6 +1380,58 @@ Title_4_Object_7 = Title_4.Dropdown({
 		end
 	end,
 	Options = temp_List
+})
+
+Title_4_Object_8 = Title_4.Toggle({
+	Text = "Swim",
+	Callback = function(Value)
+		if Value and LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid") then
+			flyVariables.Old_Grav = workspace.Gravity
+			workspace.Gravity = 0
+			
+			local swimDied = function()
+				workspace.Gravity = flyVariables.Old_Grav
+			end
+			
+			local Humanoid = LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+			gravReset = Humanoid.Died:Connect(swimDied)
+			
+			local enums = Enum.HumanoidStateType:GetEnumItems()
+			table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+			
+			for i, v in pairs(enums) do
+				Humanoid:SetStateEnabled(v, false)
+			end
+			
+			Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+			
+			playerVariables.swimbeat = RunService.Heartbeat:Connect(function()
+				pcall(function()
+					LocalPlayer.Character.HumanoidRootPart.Velocity = ((Humanoid.MoveDirection ~= Vector3.new() or UserInputService:IsKeyDown(Enum.KeyCode.Space)) and LocalPlayer.Character.HumanoidRootPart.Velocity or Vector3.new())
+				end)
+			end)
+		elseif not Value and LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid") then
+			workspace.Gravity = flyVariables.Old_Grav
+			
+			if gravReset then
+				gravReset:Disconnect()
+			end
+			
+			if playerVariables.swimbeat then
+				playerVariables.swimbeat:Disconnect()
+				playerVariables.swimbeat = nil
+			end
+			
+			local Humanoid = LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+			local enums = Enum.HumanoidStateType:GetEnumItems()
+			table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+			
+			for i, v in pairs(enums) do
+				Humanoid:SetStateEnabled(v, true)
+			end
+		end
+	end,
+	Enabled = false
 })
 
 --// Lighting \\--
@@ -1474,15 +1580,47 @@ Title_6_Object_6 = Title_6.Toggle({
 	end,
 	Enabled = espVariables.Hide_Team
 })
---[[
+
 Title_6_Object_7 = Title_6.Toggle({
-	Text = "Aim Bot",
+	Text = "Aimbot",
 	Callback = function(Value)
 		aimbotVariables.Aimbot = Value
 	end,
 	Enabled = aimbotVariables.Aimbot
 })
-]]
+
+Title_6_Object_8 = Title_6.Toggle({
+	Text = "Team Check",
+	Callback = function(Value)
+		aimbotVariables.Team_Check = Value
+	end,
+	Enabled = aimbotVariables.Team_Check
+})
+
+Title_6_Object_9 = Title_6.Toggle({
+	Text = "Wall Check",
+	Callback = function(Value)
+		aimbotVariables.Wall_Check = Value
+	end,
+	Enabled = aimbotVariables.Wall_Check
+})
+
+Title_6_Object_10 = Title_6.Toggle({
+	Text = "Third Person",
+	Callback = function(Value)
+		aimbotVariables.Third_Person = Value
+	end,
+	Enabled = aimbotVariables.Third_Person
+})
+
+Title_6_Object_11 = Title_6.Dropdown({
+	Text = "Target",
+	Callback = function(Value)
+		aimbotVariables.LockPart = Value
+	end,
+	Options = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "LeftHand", "RightHand", "LeftLowerArm", "RightLowerArm", "LeftUpperArm", "RightUpperArm", "LeftFoot", "LeftLowerLeg", "UpperTorso", "LeftUpperLeg", "RightFoot", "RightLowerLeg", "LowerTorso", "RightUpperLeg"}
+})
+
 --// Player List Update \\--
 
 function GetList()
@@ -1496,10 +1634,10 @@ end
 
 function onDied()
 	task.spawn(function()
-		if pcall(function() My_Player.Character:FindFirstChildOfClass('Humanoid') end) and My_Player.Character:FindFirstChildOfClass('Humanoid') then
-			My_Player.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
-				if getRoot(My_Player.Character) then
-					playerVariables.lastDeath = getRoot(My_Player.Character).CFrame
+		if pcall(function() LocalPlayer.Character:FindFirstChildOfClass('Humanoid') end) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
+				if getRoot(LocalPlayer.Character) then
+					playerVariables.lastDeath = getRoot(LocalPlayer.Character).CFrame
 				end
 			end)
 			
@@ -1528,7 +1666,7 @@ Players.PlayerRemoving:Connect(function(Plr)
 	end
 	
 	if playerVariables.viewing and Plr == playerVariables.viewing then
-		workspace.CurrentCamera.CameraSubject = My_Player.Character
+		Camera.CameraSubject = LocalPlayer.Character
 		playerVariables.viewing = nil
 		if viewDied then
 			viewDied:Disconnect()
@@ -1543,7 +1681,7 @@ GetList()
 
 Mouse.Button1Down:Connect(function()
 	if teleportVariables.Held_Button and getgenv().settings.click_Tele then
-		local root = My_Player.Character.HumanoidRootPart
+		local root = LocalPlayer.Character.HumanoidRootPart
 		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
 		local offset = pos-root.Position
 		GetUp()
@@ -1563,31 +1701,9 @@ UserInputService.InputEnded:Connect(function(key, gp)
 	end
 end)
 
---// Settings Lock \\--
-
-settingsLock = false
-
---// Aim Bot \\--
---[[
-Mouse.Button2Down:Connect(function()
-	if aimbotVariables.Aimbot then
-		aimbotVariables.Aiming = true
-	end
-end)
-
-Mouse.Button2Up:Connect(function()
-	aimbotVariables.Aiming = false
-end)
-
-RunService.RenderStepped:Connect(function()
-	if aimbotVariables.Aimbot and aimbotVariables.Aiming then
-		
-	end
-end
-]]
 --// Respawn \\--
 
-My_Player.CharacterAdded:Connect(function(char)
+LocalPlayer.CharacterAdded:Connect(function(char)
 	NOFLY()
 	repeat wait() until getRoot(char)
 	onDied()
@@ -1595,8 +1711,24 @@ end)
 
 onDied()
 
---// ESP Main Start \\--
+--// Typing Check \\--
+
+ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
+	Typing = true
+end)
+
+ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
+	Typing = false
+end)
+
+--// Load Aimbot/ESP \\--
+
+Load()
 
 for _, v in pairs(Players:GetPlayers()) do
 	Esp_Activation(v)
 end
+
+--// Settings Lock \\--
+
+settingsLock = false
