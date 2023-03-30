@@ -107,7 +107,6 @@ getgenv().CommandUI = {
 		Third_Person = false,
 		Team_Check = true,
 		Wall_Check = true,
-		Aiming = false,
 		Aimbot = false
 	}
 }
