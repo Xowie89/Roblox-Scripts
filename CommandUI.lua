@@ -8,23 +8,25 @@ Proportions 100%
 Body Type 0%
 ]]
 
-local Run_It = true
-if not Run_It then return end
-
 local COREGUI = game:GetService("CoreGui")
 if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
 
---// Variables \\--
+--// Services \\--
 
 local UserInputService = game:GetService('UserInputService')
 local TeleportService = game:GetService('TeleportService')
-local VirtualUser = game:GetService("VirtualUser")
-local httpservice = game:GetService('HttpService')
+local TweenService = game:GetService('TweenService')
+local VirtualUser = game:GetService('VirtualUser')
+local HttpService = game:GetService('HttpService')
 local RunService = game:GetService('RunService')
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
+
+--// Cache \\--
+
+local pcall, getgenv, next, setmetatable, mathTan, mathRad, mathFloor, mathRound, Vector2new, CFramenew, Color3fromRGB, Drawingnew, TweenInfonew, stringupper, mousemoverel = pcall, getgenv, next, setmetatable, math.tan, math.rad, math.floor, math.round, Vector2.new, CFrame.new, Color3.fromRGB, Drawing.new, TweenInfo.new, string.upper, mousemoverel or (Input and Input.MouseMove)
 
 local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
@@ -32,40 +34,81 @@ local sethidden = sethiddenproperty or set_hidden_property or set_hidden_prop
 local gethidden = gethiddenproperty or get_hidden_property or get_hidden_prop
 local setsimulation = setsimulationradius or set_simulation_radius
 
+--// Environment \\--
+
+local temp_List = {"Player", "List", "Will", "Replace", "This"}
+
 local My_Player = Players.LocalPlayer
 local Mouse = My_Player:GetMouse()
 
-local Old_Grav = workspace.Gravity
-local vehicleflyspeed = 1
-local iyflyspeed = 1
-local spinSpeed = 20
-local Tracers_Visible = false
-local Highlight_ESP = false
-local Held_Button = false
-local refreshCmd = false
-local ESPenabled = false
-local loop_Tele = false
-local Show_Data = false
-local Hide_Team = false
-local Box_ESP = false
-local target = false
---local Aiming = false
---local AimBot = false
-local FLYING = false
-local QEfly = true
-local Noclipping = nil
-local brightLoop = nil
-local bangLoop = nil
-local bangAnim = nil
-local bangDied = nil
-local swimbeat = nil
-local viewing = nil
-local lastDeath
-local minimumPlayers = 1
-local maximumPlayers = Players.MaxPlayers - 1
+getgenv().CommandUI = {
+	Player_Variables = {
+		refreshCmd = false,
+		Noclipping = nil,
+		lastDeath = nil,
+		bangLoop = nil,
+		bangAnim = nil,
+		bangDied = nil,
+		swimbeat = nil,
+		viewing = nil,
+		spinSpeed = 20
+	},
+	
+	Server_Variables = {
+		maximumPlayers = Players.MaxPlayers - 1,
+		minimumPlayers = 1
+	},
+	
+	Fly_Variables = {
+		Old_Grav = workspace.Gravity,
+		vehicleflyspeed = 1,
+		iyflyspeed = 1,
+		FLYING = false,
+		QEfly = true
+	},
+	
+	ESP_Variables = {
+		Tracers_Visible = false,
+		Highlight_ESP = false,
+		Show_Info = false,
+		Hide_Team = false,
+		Body_ESP = false,
+		Box_ESP = false
+	},
+	
+	Teleport_Variables = {
+		Held_Button = false,
+		loop_Tele = false,
+		target = false
+	},
+	
+	Lighting_Variables = {
+		brightLoop = nil,
+		origsettings = {
+			oabt = Lighting.OutdoorAmbient,
+			gs = Lighting.GlobalShadows,
+			brt = Lighting.Brightness,
+			time = Lighting.ClockTime,
+			abt = Lighting.Ambient,
+			fs = Lighting.FogStart,
+			fe = Lighting.FogEnd
+		}
+	},
+	
+	Aimbot_Variables = {
+		Aiming = false,
+		Aimbot = false
+	}
+}
 
-local origsettings = {abt = Lighting.Ambient, oabt = Lighting.OutdoorAmbient, brt = Lighting.Brightness, time = Lighting.ClockTime, fe = Lighting.FogEnd, fs = Lighting.FogStart, gs = Lighting.GlobalShadows}
-local temp_List = {"Player", "List", "Will", "Replace", "This"}
+local Environment = getgenv().CommandUI
+local teleportVariables = Environment.Teleport_Variables
+local lightingVariables = Environment.Lighting_Variables
+local playerVariables = Environment.Player_Variables
+local serverVariables = Environment.Server_Variables
+local aimbotVariables = Environment.Aimbot_Variables
+local flyVariables = Environment.Fly_Variables
+local espVariables = Environment.ESP_Variables
 
 --// Anti AFK \\--
 
@@ -81,7 +124,7 @@ if GC then
 else
 	My_Player.Idled:Connect(function()
 		VirtualUser:CaptureController()
-		VirtualUser:ClickButton2(Vector2.new())
+		VirtualUser:ClickButton2(Vector2new())
 	end)
 end
 
@@ -90,7 +133,7 @@ end
 getgenv().settings = {}
 
 if isfile("CommandUISettings.txt") then
-	getgenv().settings = httpservice:JSONDecode(readfile('CommandUISettings.txt'))
+	getgenv().settings = HttpService:JSONDecode(readfile('CommandUISettings.txt'))
 end
 
 local sNames = {"auto_Shrink", "click_Tele"}
@@ -103,7 +146,7 @@ if #getgenv().settings ~= sNames then
 		end
 	end
 	
-	writefile('CommandUISettings.txt', httpservice:JSONEncode(getgenv().settings))
+	writefile('CommandUISettings.txt', HttpService:JSONEncode(getgenv().settings))
 end
 
 local settingsLock = true
@@ -111,7 +154,7 @@ local settingsLock = true
 local function saveSettings()
 	if settingsLock == false then
 		print('Settings saved.')
-		writefile('CommandUISettings.txt', httpservice:JSONEncode(getgenv().settings))
+		writefile('CommandUISettings.txt', HttpService:JSONEncode(getgenv().settings))
 	end
 end
 
@@ -222,23 +265,23 @@ end
 --// Server Hop \\--
 
 local function ServerHop()
-	if minimumPlayers > maximumPlayers then return end
+	if serverVariables.minimumPlayers > serverVariables.maximumPlayers then return end
 	local foundserver = false
 	local searched = false
 	local pid = game.PlaceId
-	local Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
-	My_Player:Kick("\nDo not leave.\nSearching for a server with a minimum of "..minimumPlayers.." and a maximum of "..maximumPlayers.." players.")
+	local Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
+	My_Player:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
 	task.spawn(function()
 		repeat
 			if searched then
 				if not Servers.nextPageCursor then
 					warn("All servers searched")
 				end
-				Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
+				Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
 			end
 			
 			for i,v in pairs(Servers.data) do
-				if v.playing <= maximumPlayers and v.playing >= minimumPlayers then
+				if v.playing <= serverVariables.maximumPlayers and v.playing >= serverVariables.minimumPlayers then
 					foundserver = true
 					TeleportService:TeleportToPlaceInstance(pid, v.id)
 				end
@@ -255,7 +298,12 @@ end
 function Tele(Plr)
 	task.spawn(function()
 		repeat
-			local tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+			local tPlr
+			if string.find(Plr, "-") then
+				tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+			else
+				tPlr = Players:FindFirstChild(Plr)
+			end
 			if tPlr then
 				local myChar = My_Player.Character
 				local tChar = tPlr.Character
@@ -269,7 +317,7 @@ function Tele(Plr)
 				end
 			end
 			wait()
-		until not loop_Tele or target ~= Plr or not Plr or not tPlr or not target
+		until not teleportVariables.loop_Tele or teleportVariables.target ~= Plr or not Plr or not tPlr or not teleportVariables.target
 	end)
 end
 
@@ -299,7 +347,7 @@ function sFLY(vfly)
 	local SPEED = 0
 	
 	local function FLY()
-		FLYING = true
+		flyVariables.FLYING = true
 		local BG = Instance.new('BodyGyro')
 		local BV = Instance.new('BodyVelocity')
 		BG.P = 9e4
@@ -323,16 +371,16 @@ function sFLY(vfly)
 				end
 				
 				if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
-					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFramenew(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
 					lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
 				elseif (CONTROL.L + CONTROL.R) == 0 and (CONTROL.F + CONTROL.B) == 0 and (CONTROL.Q + CONTROL.E) == 0 and SPEED ~= 0 then
-					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFramenew(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
 				else
 					BV.velocity = Vector3.new(0, 0, 0)
 				end
 				
 				BG.cframe = workspace.CurrentCamera.CoordinateFrame
-			until not FLYING
+			until not flyVariables.FLYING
 			
 			CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 			lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
@@ -348,17 +396,17 @@ function sFLY(vfly)
 	
 	flyKeyDown = Mouse.KeyDown:Connect(function(KEY)
 		if KEY:lower() == 'w' then
-			CONTROL.F = (vfly and vehicleflyspeed or iyflyspeed)
+			CONTROL.F = (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed)
 		elseif KEY:lower() == 's' then
-			CONTROL.B = - (vfly and vehicleflyspeed or iyflyspeed)
+			CONTROL.B = - (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed)
 		elseif KEY:lower() == 'a' then
-			CONTROL.L = - (vfly and vehicleflyspeed or iyflyspeed)
+			CONTROL.L = - (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed)
 		elseif KEY:lower() == 'd' then 
-			CONTROL.R = (vfly and vehicleflyspeed or iyflyspeed)
-		elseif QEfly and KEY:lower() == 'e' then
-			CONTROL.Q = (vfly and vehicleflyspeed or iyflyspeed) * 2
-		elseif QEfly and KEY:lower() == 'q' then
-			CONTROL.E = - (vfly and vehicleflyspeed or iyflyspeed) * 2
+			CONTROL.R = (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed)
+		elseif flyVariables.QEfly and KEY:lower() == 'e' then
+			CONTROL.Q = (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed) * 2
+		elseif flyVariables.QEfly and KEY:lower() == 'q' then
+			CONTROL.E = - (vfly and flyVariables.vehicleflyspeed or flyVariables.iyflyspeed) * 2
 		end
 		
 		pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
@@ -383,7 +431,7 @@ function sFLY(vfly)
 end
 
 function NOFLY()
-	FLYING = false
+	flyVariables.FLYING = false
 	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
 	
 	if My_Player.Character then
@@ -403,27 +451,27 @@ function Bang(Plr)
 	local tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
 	if tPlr then
 	
-		bangAnim = Instance.new("Animation")
+		playerVariables.bangAnim = Instance.new("Animation")
 		if not r15(My_Player) then
-			bangAnim.AnimationId = "rbxassetid://148840371"
+			playerVariables.bangAnim.AnimationId = "rbxassetid://148840371"
 		else
-			bangAnim.AnimationId = "rbxassetid://5918726674"
+			playerVariables.bangAnim.AnimationId = "rbxassetid://5918726674"
 		end
 		
-		bang = My_Player.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(bangAnim)
+		bang = My_Player.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(playerVariables.bangAnim)
 		bang:Play(.1, 1, 1)
 		bang:AdjustSpeed(3)
 		
 		local bangplr = tPlr
-		bangDied = My_Player.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
-			bangLoop = bangLoop:Disconnect()
+		playerVariables.bangDied = My_Player.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
+			playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
 			bang:Stop()
-			bangAnim:Destroy()
-			bangDied:Disconnect()
+			playerVariables.bangAnim:Destroy()
+			playerVariables.bangDied:Disconnect()
 		end)
 		
-		local bangOffet = CFrame.new(0, 0, 1.1)
-		bangLoop = RunService.Stepped:Connect(function()
+		local bangOffet = CFramenew(0, 0, 1.1)
+		playerVariables.bangLoop = RunService.Stepped:Connect(function()
 			pcall(function()
 				local otherRoot = getTorso(tPlr.Character)
 				getRoot(My_Player.Character).CFrame = otherRoot.CFrame * bangOffet
@@ -433,11 +481,11 @@ function Bang(Plr)
 end
 
 function Unbang()
-	if bangLoop then
-		bangLoop = bangLoop:Disconnect()
-		bangDied:Disconnect()
+	if playerVariables.bangLoop then
+		playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
+		playerVariables.bangDied:Disconnect()
 		bang:Stop()
-		bangAnim:Destroy()
+		playerVariables.bangAnim:Destroy()
 	end
 end
 
@@ -446,19 +494,19 @@ end
 local round = function(...) 
 	local a = {}
 	for i,v in next, table.pack(...) do
-		a[i] = math.round(v)
+		a[i] = mathRound(v)
 	end
 	return unpack(a)
 end
 
 local wtvp = function(...)
 	local a, b = workspace.CurrentCamera.WorldToViewportPoint(workspace.CurrentCamera, ...)
-	return Vector2.new(a.X, a.Y), b, a.Z
+	return Vector2new(a.X, a.Y), b, a.Z
 end
 
 local function show_Data(Obj)
 	if Obj then
-		if Activate_Data then
+		if espVariables.Show_Info then
 			Obj.TextTransparency = 0
 			Obj.TextStrokeTransparency = 0
 		else
@@ -472,7 +520,7 @@ local function Show_Body(Plr)
 	local BodyESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Body")
 	if BodyESPfolder and Plr and #BodyESPfolder:GetChildren() > 0 then
 		for _,v in pairs(BodyESPfolder:GetChildren()) do
-			if Hide_Team and Plr.TeamColor == My_Player.TeamColor then
+			if espVariables.Hide_Team and Plr.TeamColor == My_Player.TeamColor then
 				v.Transparency = 1
 			else
 				v.Transparency = .25
@@ -498,7 +546,7 @@ function Esp_Activation(Plr)
 		local BBG = Instance.new("BillboardGui")
 		BBG.Name = Plr.Name
 		BBG.Size = UDim2.new(8, 0, 3, 0)
-		BBG.SizeOffset = Vector2.new(0, .75)
+		BBG.SizeOffset = Vector2new(0, .75)
 		BBG.AlwaysOnTop = true
 		BBG.Parent = DataESPholder
 		
@@ -515,12 +563,12 @@ function Esp_Activation(Plr)
 		
 		local Highlight = Instance.new("Highlight")
 		Highlight.FillTransparency = 1
-		Highlight.Enabled = Highlight_ESP
+		Highlight.Enabled = espVariables.Highlight_ESP
 		Highlight.DepthMode = "AlwaysOnTop"
 		Highlight.Parent = HighlightESPholder
 		
-		local TracerLine = Drawing.new("Line")
-		local TracerBox = Drawing.new("Square")
+		local TracerLine = Drawingnew("Line")
+		local TracerBox = Drawingnew("Square")
 		
 		RunService.RenderStepped:Connect(function()
 			if Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
@@ -532,6 +580,28 @@ function Esp_Activation(Plr)
 				local HL
 				local BBG
 				local TL
+				
+				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
+				local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart_Position * CFramenew(0, -HumanoidRootPart_Size.Y, 0).p)
+				
+				local cframe = Plr.Character:GetModelCFrame()
+				local position, visible, depth = wtvp(cframe.Position)
+				local scaleFactor = 1 / (depth * mathTan(mathRad(workspace.CurrentCamera.FieldOfView / 2)) * 2) * 1000
+				local width, height = round(4 * scaleFactor, 5 * scaleFactor)
+				local x, y = round(position.X, position.Y)
+				
+				TracerLine.Thickness = 1
+				TracerLine.Transparency = .75
+				TracerLine.ZIndex = 10
+				TracerLine.Color = Plr.TeamColor.Color
+				
+				TracerBox.Thickness = 2
+				TracerBox.Transparency = .75
+				TracerBox.ZIndex = 10
+				TracerBox.Color = Plr.TeamColor.Color
+				TracerBox.Filled = false
+				
+				TracerLine.From = Vector2new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
 				
 				if DataESPfolder then
 					BBG = DataESPfolder:FindFirstChild(Plr.Name)
@@ -545,7 +615,7 @@ function Esp_Activation(Plr)
 				end
 				
 				local Adorned = true
-				if BodyESPfolder and ESPenabled then
+				if BodyESPfolder and espVariables.Body_ESP then
 					if #BodyESPfolder:GetChildren() == 0 then
 						Adorned = false
 					else
@@ -572,7 +642,7 @@ function Esp_Activation(Plr)
 							end
 						end
 					end
-				elseif BodyESPfolder and not ESPenabled then
+				elseif BodyESPfolder and not espVariables.Body_ESP then
 					if #BodyESPfolder:GetChildren() > 0 then
 						for _,v in pairs(BodyESPfolder:GetChildren()) do
 							v:Destroy()
@@ -581,43 +651,20 @@ function Esp_Activation(Plr)
 				end
 				
 				if HL then
-					if not HL.Adornee or HL.Adornee.Parent == nil then
-						if Plr.Character then
-							HL.Adornee = Plr.Character
-						end
+					if Plr.Character and HL.Adornee ~= Plr.Character then
+						HL.Adornee = Plr.Character
 					end
+					
 					HL.OutlineColor = Plr.TeamColor.Color
 				end
 				
-				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
-				local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart_Position * CFrame.new(0, -HumanoidRootPart_Size.Y, 0).p)
-				
-				TracerLine.Thickness = 1
-				TracerLine.Transparency = .75
-				TracerLine.ZIndex = 10
-				TracerLine.Color = Plr.TeamColor.Color
-				
-				TracerBox.Thickness = 2
-				TracerBox.Transparency = .75
-				TracerBox.ZIndex = 10
-				TracerBox.Color = Plr.TeamColor.Color
-				TracerBox.Filled = false
-				
-				TracerLine.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
-				
-				local cframe = Plr.Character:GetModelCFrame()
-				local position, visible, depth = wtvp(cframe.Position)
-				local scaleFactor = 1 / (depth * math.tan(math.rad(workspace.CurrentCamera.FieldOfView / 2)) * 2) * 1000
-				local width, height = round(4 * scaleFactor, 5 * scaleFactor)
-				local x, y = round(position.X, position.Y)
-				
 				if OnScreen and visible and Human then
 					if Human.Health > 0 then
-						TracerLine.To = Vector2.new(Vector.X, Vector.Y)
-						TracerBox.Size = Vector2.new(width, height)
-						TracerBox.Position = Vector2.new(round(x - width / 2, y - height / 2))
+						TracerLine.To = Vector2new(Vector.X, Vector.Y)
+						TracerBox.Size = Vector2new(width, height)
+						TracerBox.Position = Vector2new(round(x - width / 2, y - height / 2))
 						
-						if Hide_Team then
+						if espVariables.Hide_Team then
 							if Plr.TeamColor == My_Player.TeamColor then
 								TracerLine.Visible = false
 								TracerBox.Visible = false
@@ -633,8 +680,8 @@ function Esp_Activation(Plr)
 									HL.Enabled = false
 								end
 							else
-								TracerLine.Visible = Tracers_Visible
-								TracerBox.Visible = Box_ESP
+								TracerLine.Visible = espVariables.Tracers_Visible
+								TracerBox.Visible = espVariables.Box_ESP
 								
 								if TL then
 									show_Data(TL)
@@ -643,12 +690,12 @@ function Esp_Activation(Plr)
 								Show_Body(Plr)
 								
 								if HL then
-									HL.Enabled = Highlight_ESP
+									HL.Enabled = espVariables.Highlight_ESP
 								end
 							end
 						else
-							TracerLine.Visible = Tracers_Visible
-							TracerBox.Visible = Box_ESP
+							TracerLine.Visible = espVariables.Tracers_Visible
+							TracerBox.Visible = espVariables.Box_ESP
 							
 							if TL then
 								show_Data(TL)
@@ -657,7 +704,7 @@ function Esp_Activation(Plr)
 							Show_Body(Plr)
 							
 							if HL then
-								HL.Enabled = Highlight_ESP
+								HL.Enabled = espVariables.Highlight_ESP
 							end
 						end
 					else
@@ -704,7 +751,7 @@ function Esp_Activation(Plr)
 				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and My_Player.Character and getRoot(My_Player.Character) then
 					BBG.Adornee = Plr.Character.Head
 					
-					local pos = math.floor(My_Player:DistanceFromCharacter(getRoot(Plr.Character).Position))
+					local pos = mathFloor(My_Player:DistanceFromCharacter(getRoot(Plr.Character).Position))
 					if Plr.Name ~= Plr.DisplayName then
 						TL.Text = '@'..Plr.Name..'\n['..Plr.DisplayName..']\n('..pos..')'
 					else
@@ -751,7 +798,7 @@ function respawn(Plr)
 end
 
 function refresh(Plr)
-	refreshCmd = true
+	playerVariables.refreshCmd = true
 	local Human = Plr.Character and Plr.Character:FindFirstChildOfClass("Humanoid", true)
 	local pos = Human and Human.RootPart and Human.RootPart.CFrame
 	local pos1 = workspace.CurrentCamera.CFrame
@@ -760,7 +807,7 @@ function refresh(Plr)
 	
 	task.spawn(function()
 		Plr.CharacterAdded:Wait():WaitForChild("Humanoid").RootPart.CFrame, workspace.CurrentCamera.CFrame = pos, wait() and pos1
-		refreshCmd = false
+		playerVariables.refreshCmd = false
 	end)
 end
 
@@ -828,11 +875,11 @@ Title_1_Object_2 = Title_1.Toggle({
 				end
 			end
 			
-			Noclipping = RunService.Stepped:Connect(NoclipLoop)
+			playerVariables.Noclipping = RunService.Stepped:Connect(NoclipLoop)
 		end
 		
-		if not Value and Noclipping then
-			Noclipping:Disconnect()
+		if not Value and playerVariables.Noclipping then
+			playerVariables.Noclipping:Disconnect()
 		end
 	end,
 	Enabled = false
@@ -842,11 +889,11 @@ Title_1_Object_3 = Title_1.Toggle({
 	Text = "Swim",
 	Callback = function(Value)
 		if Value and My_Player and My_Player.Character and My_Player.Character:FindFirstChildWhichIsA("Humanoid") then
-			Old_Grav = workspace.Gravity
+			flyVariables.Old_Grav = workspace.Gravity
 			workspace.Gravity = 0
 			
 			local swimDied = function()
-				workspace.Gravity = Old_Grav
+				workspace.Gravity = flyVariables.Old_Grav
 			end
 			
 			local Humanoid = My_Player.Character:FindFirstChildWhichIsA("Humanoid")
@@ -861,21 +908,21 @@ Title_1_Object_3 = Title_1.Toggle({
 			
 			Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
 			
-			swimbeat = RunService.Heartbeat:Connect(function()
+			playerVariables.swimbeat = RunService.Heartbeat:Connect(function()
 				pcall(function()
 					My_Player.Character.HumanoidRootPart.Velocity = ((Humanoid.MoveDirection ~= Vector3.new() or UserInputService:IsKeyDown(Enum.KeyCode.Space)) and My_Player.Character.HumanoidRootPart.Velocity or Vector3.new())
 				end)
 			end)
 		elseif not Value and My_Player and My_Player.Character and My_Player.Character:FindFirstChildWhichIsA("Humanoid") then
-			workspace.Gravity = Old_Grav
+			workspace.Gravity = flyVariables.Old_Grav
 			
 			if gravReset then
 				gravReset:Disconnect()
 			end
 			
-			if swimbeat then
-				swimbeat:Disconnect()
-				swimbeat = nil
+			if playerVariables.swimbeat then
+				playerVariables.swimbeat:Disconnect()
+				playerVariables.swimbeat = nil
 			end
 			
 			local Humanoid = My_Player.Character:FindFirstChildWhichIsA("Humanoid")
@@ -946,10 +993,10 @@ Title_1_Object_6 = Title_1.Button({
 Title_1_Object_7 = Title_1.Slider({
 	Text = "Spin Speed",
 	Callback = function(Value)
-		spinSpeed = Value
+		playerVariables.spinSpeed = Value
 		for i,v in pairs(getRoot(My_Player.Character):GetChildren()) do
 			if v.Name == "Spinning" then
-				v.AngularVelocity = Vector3.new(0,spinSpeed,0)
+				v.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
 			end
 		end
 	end,
@@ -966,7 +1013,7 @@ Title_1_Object_8 = Title_1.Toggle({
 			Spin.Name = "Spinning"
 			Spin.Parent = getRoot(My_Player.Character)
 			Spin.MaxTorque = Vector3.new(0, math.huge, 0)
-			Spin.AngularVelocity = Vector3.new(0,spinSpeed,0)
+			Spin.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
 		elseif not Value and My_Player.Character then
 			for i,v in pairs(getRoot(My_Player.Character):GetChildren()) do
 				if v.Name == "Spinning" then
@@ -1011,12 +1058,12 @@ Title_2_Object_1 = Title_2.Toggle({
 Title_2_Object_2 = Title_2.Button({
 	Text = "Flashback",
 	Callback = function(Value)
-		if lastDeath then
+		if playerVariables.lastDeath then
 			if My_Player.Character:FindFirstChildOfClass('Humanoid') and My_Player.Character:FindFirstChildOfClass('Humanoid').SeatPart then
 				My_Player.Character:FindFirstChildOfClass('Humanoid').Sit = false
 				wait(.1)
 			end
-			getRoot(My_Player.Character).CFrame = lastDeath
+			getRoot(My_Player.Character).CFrame = playerVariables.lastDeath
 		end
 	end,
 	Menu = {
@@ -1031,9 +1078,9 @@ Title_2_Object_2 = Title_2.Button({
 Title_2_Object_3 = Title_2.Toggle({
 	Text = "Loop Tele",
 	Callback = function(Value)
-		loop_Tele = Value
+		teleportVariables.loop_Tele = Value
 		if Value then
-			Tele(target)
+			Tele(teleportVariables.target)
 		end
 	end,
 	Enabled = false
@@ -1042,7 +1089,7 @@ Title_2_Object_3 = Title_2.Toggle({
 Title_2_Object_4 = Title_2.Dropdown({
 	Text = "Teleport To",
 	Callback = function(Value)
-		target = Value
+		teleportVariables.target = Value
 		Tele(Value)
 	end,
 	Options = temp_List
@@ -1053,8 +1100,8 @@ Title_2_Object_5 = Title_2.Button({
 	Callback = function(Value)
 		StopFreecam()
 		
-		if viewing ~= nil then
-			viewing = nil
+		if playerVariables.viewing then
+			playerVariables.viewing = nil
 		end
 		
 		if viewDied then
@@ -1086,18 +1133,18 @@ Title_2_Object_6 = Title_2.Dropdown({
 				viewChanged:Disconnect()
 			end
 			
-			viewing = tPlr
-			workspace.CurrentCamera.CameraSubject = viewing.Character
+			playerVariables.viewing = tPlr
+			workspace.CurrentCamera.CameraSubject = playerVariables.viewing.Character
 			
 			local function viewDiedFunc()
-				repeat wait() until viewing.Character ~= nil and getRoot(viewing.Character)
-				workspace.CurrentCamera.CameraSubject = viewing.Character
+				repeat wait() until playerVariables.viewing.Character and getRoot(playerVariables.viewing.Character)
+				workspace.CurrentCamera.CameraSubject = playerVariables.viewing.Character
 			end
 			
-			viewDied = viewing.CharacterAdded:Connect(viewDiedFunc)
+			viewDied = playerVariables.viewing.CharacterAdded:Connect(viewDiedFunc)
 			
 			local function viewChangedFunc()
-				workspace.CurrentCamera.CameraSubject = viewing.Character
+				workspace.CurrentCamera.CameraSubject = playerVariables.viewing.Character
 			end
 			
 			viewChanged = workspace.CurrentCamera:GetPropertyChangedSignal("CameraSubject"):Connect(viewChangedFunc)
@@ -1120,7 +1167,7 @@ Title_2_Object_7 = Title_2.Dropdown({
 			
 			headSit = RunService.Heartbeat:Connect(function()
 				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(My_Player.Character) and My_Player.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(My_Player.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(0), 0) * CFrame.new(0, 1.6, .5)
+					getRoot(My_Player.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(0), 0) * CFramenew(0, 1.6, .5)
 				else
 					headSit:Disconnect()
 				end
@@ -1135,21 +1182,21 @@ Title_2_Object_7 = Title_2.Dropdown({
 Title_3_Object_1 = Title_3.Slider({
 	Text = "Min Players",
 	Callback = function(Value)
-		minimumPlayers = Value
+		serverVariables.minimumPlayers = Value
 	end,
 	Min = 1,
-	Max = maximumPlayers,
+	Max = serverVariables.maximumPlayers,
 	Def = 1
 })
 
 Title_3_Object_2 = Title_3.Slider({
 	Text = "Max Players",
 	Callback = function(Value)
-		maximumPlayers = Value
+		serverVariables.maximumPlayers = Value
 	end,
 	Min = 1,
-	Max = maximumPlayers,
-	Def = maximumPlayers
+	Max = serverVariables.maximumPlayers,
+	Def = serverVariables.maximumPlayers
 })
 
 Title_3_Object_3 = Title_3.Button({
@@ -1191,8 +1238,8 @@ Title_3_Object_4 = Title_3.Button({
 Title_4_Object_1 = Title_4.Slider({
 	Text = "Fly Speed",
 	Callback = function(Value)
-		iyflyspeed = Value
-		vehicleflyspeed = Value
+		flyVariables.iyflyspeed = Value
+		flyVariables.vehicleflyspeed = Value
 	end,
 	Min = 1,
 	Max = 25,
@@ -1230,9 +1277,9 @@ Title_4_Object_3 = Title_4.Toggle({
 Title_4_Object_4 = Title_4.Toggle({
 	Text = "Q/E Fly",
 	Callback = function(Value)
-		QEfly = Value
+		flyVariables.QEfly = Value
 	end,
-	Enabled = QEfly
+	Enabled = flyVariables.QEfly
 })
 
 Title_4_Object_5 = Title_4.Button({
@@ -1271,7 +1318,7 @@ Title_4_Object_7 = Title_4.Dropdown({
 			
 			headSit = RunService.Heartbeat:Connect(function()
 				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(My_Player.Character) and My_Player.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(My_Player.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, math.rad(180), 0) * CFrame.new(0, 1.25, 1)
+					getRoot(My_Player.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(180), 0) * CFramenew(0, 1.25, 1)
 				else
 					headSit:Disconnect()
 				end
@@ -1290,7 +1337,7 @@ Title_5_Object_1 = Title_5.Button({
 		Lighting.ClockTime = 14
 		Lighting.FogEnd = 100000
 		Lighting.GlobalShadows = false
-		Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+		Lighting.OutdoorAmbient = Color3fromRGB(128, 128, 128)
 	end,
 	Menu = {
 		Info = function(self)
@@ -1341,13 +1388,13 @@ Title_5_Object_4 = Title_5.Toggle({
 Title_5_Object_5 = Title_5.Button({
 	Text = "Restore Lighting",
 	Callback = function(Value)
-		Lighting.Ambient = origsettings.abt
-		Lighting.OutdoorAmbient = origsettings.oabt
-		Lighting.Brightness = origsettings.brt
-		Lighting.ClockTime = origsettings.time
-		Lighting.FogEnd = origsettings.fe
-		Lighting.FogStart = origsettings.fs
-		Lighting.GlobalShadows = origsettings.gs
+		Lighting.Ambient = lightingVariables.origsettings.abt
+		Lighting.OutdoorAmbient = lightingVariables.origsettings.oabt
+		Lighting.Brightness = lightingVariables.origsettings.brt
+		Lighting.ClockTime = lightingVariables.origsettings.time
+		Lighting.FogEnd = lightingVariables.origsettings.fe
+		Lighting.FogStart = lightingVariables.origsettings.fs
+		Lighting.GlobalShadows = lightingVariables.origsettings.gs
 	end,
 	Menu = {
 		Info = function(self)
@@ -1367,12 +1414,12 @@ Title_5_Object_6 = Title_5.Toggle({
 				Lighting.ClockTime = 14
 				Lighting.FogEnd = 100000
 				Lighting.GlobalShadows = false
-				Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+				Lighting.OutdoorAmbient = Color3fromRGB(128, 128, 128)
 			end
 			
-			brightLoop = RunService.RenderStepped:Connect(brightFunc)
-		elseif not Value and brightLoop then
-			brightLoop:Disconnect()
+			lightingVariables.brightLoop = RunService.RenderStepped:Connect(brightFunc)
+		elseif not Value and lightingVariables.brightLoop then
+			lightingVariables.brightLoop:Disconnect()
 		end
 	end,
 	Enabled = false
@@ -1383,57 +1430,57 @@ Title_5_Object_6 = Title_5.Toggle({
 Title_6_Object_1 = Title_6.Toggle({
 	Text = "Body ESP",
 	Callback = function(Value)
-		ESPenabled = Value
+		espVariables.Body_ESP = Value
 	end,
-	Enabled = false
+	Enabled = espVariables.Body_ESP
 })
 
 Title_6_Object_2 = Title_6.Toggle({
 	Text = "Box ESP",
 	Callback = function(Value)
-		Box_ESP = Value
+		espVariables.Box_ESP = Value
 	end,
-	Enabled = false
+	Enabled = espVariables.Box_ESP
 })
 
 Title_6_Object_3 = Title_6.Toggle({
 	Text = "Highlight ESP",
 	Callback = function(Value)
-		Highlight_ESP = Value
+		espVariables.Highlight_ESP = Value
 	end,
-	Enabled = false
+	Enabled = espVariables.Highlight_ESP
 })
 
 Title_6_Object_4 = Title_6.Toggle({
 	Text = "Tracers",
 	Callback = function(Value)
-		Tracers_Visible = Value
+		espVariables.Tracers_Visible = Value
 	end,
-	Enabled = false
+	Enabled = espVariables.Tracers_Visible
 })
 
 Title_6_Object_5 = Title_6.Toggle({
 	Text = "Show Info",
 	Callback = function(Value)
-		Activate_Data = Value
+		espVariables.Show_Info = Value
 	end,
-	Enabled = false
+	Enabled = espVariables.Show_Info
 })
 
 Title_6_Object_6 = Title_6.Toggle({
 	Text = "Hide Team",
 	Callback = function(Value)
-		Hide_Team = Value
+		espVariables.Hide_Team = Value
 	end,
-	Enabled = false
+	Enabled = espVariables.Hide_Team
 })
 --[[
 Title_6_Object_7 = Title_6.Toggle({
 	Text = "Aim Bot",
 	Callback = function(Value)
-		AimBot = Value
+		aimbotVariables.Aimbot = Value
 	end,
-	Enabled = false
+	Enabled = aimbotVariables.Aimbot
 })
 ]]
 --// Player List Update \\--
@@ -1452,7 +1499,7 @@ function onDied()
 		if pcall(function() My_Player.Character:FindFirstChildOfClass('Humanoid') end) and My_Player.Character:FindFirstChildOfClass('Humanoid') then
 			My_Player.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
 				if getRoot(My_Player.Character) then
-					lastDeath = getRoot(My_Player.Character).CFrame
+					playerVariables.lastDeath = getRoot(My_Player.Character).CFrame
 				end
 			end)
 			
@@ -1480,9 +1527,9 @@ Players.PlayerRemoving:Connect(function(Plr)
 		end
 	end
 	
-	if viewing ~= nil and Plr == viewing then
+	if playerVariables.viewing and Plr == playerVariables.viewing then
 		workspace.CurrentCamera.CameraSubject = My_Player.Character
-		viewing = nil
+		playerVariables.viewing = nil
 		if viewDied then
 			viewDied:Disconnect()
 			viewChanged:Disconnect()
@@ -1495,7 +1542,7 @@ GetList()
 --// Left Control/Shift Click Teleport \\--
 
 Mouse.Button1Down:Connect(function()
-	if Held_Button and getgenv().settings.click_Tele then
+	if teleportVariables.Held_Button and getgenv().settings.click_Tele then
 		local root = My_Player.Character.HumanoidRootPart
 		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
 		local offset = pos-root.Position
@@ -1506,13 +1553,13 @@ end)
 
 UserInputService.InputBegan:Connect(function(key, gp)
 	if key.KeyCode == Enum.KeyCode.LeftControl or key.KeyCode == Enum.KeyCode.LeftShift then
-		Held_Button = true
+		teleportVariables.Held_Button = true
 	end
 end)
 
 UserInputService.InputEnded:Connect(function(key, gp)
 	if key.KeyCode == Enum.KeyCode.LeftControl or key.KeyCode == Enum.KeyCode.LeftShift then
-		Held_Button = false
+		teleportVariables.Held_Button = false
 	end
 end)
 
@@ -1523,17 +1570,17 @@ settingsLock = false
 --// Aim Bot \\--
 --[[
 Mouse.Button2Down:Connect(function()
-	if AimBot then
-		Aiming = true
+	if aimbotVariables.Aimbot then
+		aimbotVariables.Aiming = true
 	end
 end)
 
 Mouse.Button2Up:Connect(function()
-	Aiming = false
+	aimbotVariables.Aiming = false
 end)
 
 RunService.RenderStepped:Connect(function()
-	if AimBot and Aiming then
+	if aimbotVariables.Aimbot and aimbotVariables.Aiming then
 		
 	end
 end
