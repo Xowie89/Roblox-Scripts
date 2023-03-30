@@ -398,7 +398,7 @@ local function ServerHop()
 	end)
 end
 
---// Teleporter \\--
+--// Teleport \\--
 
 function Tele(Plr)
 	task.spawn(function()
@@ -553,7 +553,12 @@ end
 function Bang(Plr)
 	Unbang()
 	wait()
-	local tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+	local tPlr
+	if string.find(Plr, "-") then
+		tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+	else
+		tPlr = Players:FindFirstChild(Plr)
+	end
 	if tPlr then
 	
 		playerVariables.bangAnim = Instance.new("Animation")
@@ -1100,7 +1105,7 @@ Title_1_Object_8 = Title_1.Button({
 --// Teleport/Spy \\--
 
 Title_2_Object_1 = Title_2.Toggle({
-	Text = "Click Teleport (Hold Left Contol/Shift)",
+	Text = "Click Teleport (Hold LContol/LShift)",
 	Callback = function(Value)
 		getgenv().settings.click_Tele = Value
 		saveSettings()
@@ -1179,7 +1184,12 @@ Title_2_Object_6 = Title_2.Dropdown({
 		StopFreecam()
 		
 		local Plr = Value
-		local tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+		local tPlr
+		if string.find(Plr, "-") then
+			tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+		else
+			tPlr = Players:FindFirstChild(Plr)
+		end
 		if tPlr then
 			if viewDied then
 				viewDied:Disconnect()
@@ -1210,7 +1220,12 @@ Title_2_Object_7 = Title_2.Dropdown({
 	Text = "Headsit",
 	Callback = function(Value)
 		local Plr = Value
-		local tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+		local tPlr
+		if string.find(Plr, "-") then
+			tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+		else
+			tPlr = Players:FindFirstChild(Plr)
+		end
 		if tPlr then
 			if headSit then
 				headSit:Disconnect() 
@@ -1361,7 +1376,12 @@ Title_4_Object_7 = Title_4.Dropdown({
 	Text = "Facesit",
 	Callback = function(Value)
 		local Plr = Value
-		local tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+		local tPlr
+		if string.find(Plr, "-") then
+			tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
+		else
+			tPlr = Players:FindFirstChild(Plr)
+		end
 		if tPlr then
 			if headSit then
 				headSit:Disconnect()
@@ -1676,7 +1696,7 @@ end)
 
 GetList()
 
---// Left Control/Shift Click Teleport \\--
+--// Click Teleport \\--
 
 Mouse.Button1Down:Connect(function()
 	if teleportVariables.Held_Button and getgenv().settings.click_Tele then
