@@ -193,6 +193,16 @@ function getTorso(x)
 	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
 end
 
+function getPlayerFromString(String)
+	local Player
+	if string.find(String, "-") then
+		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
+	else
+		Player = Players:FindFirstChild(String)
+	end
+	return Player
+end
+
 --// Aimbot Functions \\--
 
 local function ConvertVector(Vector)
@@ -403,12 +413,7 @@ end
 function Tele(Plr)
 	task.spawn(function()
 		repeat
-			local tPlr
-			if string.find(Plr, "-") then
-				tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
-			else
-				tPlr = Players:FindFirstChild(Plr)
-			end
+			local tPlr = getPlayerFromString(Plr)
 			if tPlr then
 				local myChar = LocalPlayer.Character
 				local tChar = tPlr.Character
@@ -431,9 +436,9 @@ function getPlayers()
 	for _,v in pairs(Players:GetPlayers()) do
 		if v ~= LocalPlayer then
 			if v.Name ~= v.DisplayName then
-				table.insert(Plrs, v.Name.." - "..v.DisplayName)
+				table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
 			else
-				table.insert(Plrs, v.Name)
+				table.insert(Plrs, "@"..v.Name)
 			end
 		end
 	end
@@ -553,14 +558,8 @@ end
 function Bang(Plr)
 	Unbang()
 	wait()
-	local tPlr
-	if string.find(Plr, "-") then
-		tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
-	else
-		tPlr = Players:FindFirstChild(Plr)
-	end
+	local tPlr = getPlayerFromString(Plr)
 	if tPlr then
-	
 		playerVariables.bangAnim = Instance.new("Animation")
 		if not r15(LocalPlayer) then
 			playerVariables.bangAnim.AnimationId = "rbxassetid://148840371"
@@ -1182,14 +1181,7 @@ Title_2_Object_6 = Title_2.Dropdown({
 	Text = "View",
 	Callback = function(Value)
 		StopFreecam()
-		
-		local Plr = Value
-		local tPlr
-		if string.find(Plr, "-") then
-			tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
-		else
-			tPlr = Players:FindFirstChild(Plr)
-		end
+		local tPlr = getPlayerFromString(Value)
 		if tPlr then
 			if viewDied then
 				viewDied:Disconnect()
@@ -1219,13 +1211,7 @@ Title_2_Object_6 = Title_2.Dropdown({
 Title_2_Object_7 = Title_2.Dropdown({
 	Text = "Headsit",
 	Callback = function(Value)
-		local Plr = Value
-		local tPlr
-		if string.find(Plr, "-") then
-			tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
-		else
-			tPlr = Players:FindFirstChild(Plr)
-		end
+		local tPlr = getPlayerFromString(Value)
 		if tPlr then
 			if headSit then
 				headSit:Disconnect() 
@@ -1375,13 +1361,7 @@ Title_4_Object_6 = Title_4.Dropdown({
 Title_4_Object_7 = Title_4.Dropdown({
 	Text = "Facesit",
 	Callback = function(Value)
-		local Plr = Value
-		local tPlr
-		if string.find(Plr, "-") then
-			tPlr = Players:FindFirstChild(string.sub(Plr, 1, string.find(Plr, " ") - 1))
-		else
-			tPlr = Players:FindFirstChild(Plr)
-		end
+		local tPlr = getPlayerFromString(Value)
 		if tPlr then
 			if headSit then
 				headSit:Disconnect()
