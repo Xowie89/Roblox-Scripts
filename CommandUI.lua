@@ -198,7 +198,7 @@ function getPlayerFromString(String)
 	if string.find(String, "-") then
 		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
 	else
-		Player = Players:FindFirstChild(string.sub(String, 2, #String)
+		Player = Players:FindFirstChild(string.sub(String, 2, #String))
 	end
 	return Player
 end
