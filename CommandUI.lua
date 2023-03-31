@@ -195,7 +195,7 @@ end
 
 function getPlayerFromString(String)
 	local Player
-	if string.find(String, "-") then
+	if string.find(String, "|") then
 		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
 	else
 		Player = Players:FindFirstChild(string.sub(String, 2, #String))
