@@ -8,13 +8,11 @@ Proportions 100%
 Body Type 0%
 ]]
 
-local COREGUI = game:GetService("CoreGui")
 if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
 
 --// Services \\--
-
 local UserInputService = game:GetService('UserInputService')
 local TeleportService = game:GetService('TeleportService')
 local TweenService = game:GetService('TweenService')
@@ -23,6 +21,7 @@ local HttpService = game:GetService('HttpService')
 local RunService = game:GetService('RunService')
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
+local COREGUI = game:GetService("CoreGui")
 
 --// Cache \\--
 
@@ -191,16 +190,6 @@ end
 function getTorso(x)
 	x = x or LocalPlayer.Character
 	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
-end
-
-function getPlayerFromString(String)
-	local Player
-	if string.find(String, "|") then
-		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
-	else
-		Player = Players:FindFirstChild(string.sub(String, 2, #String))
-	end
-	return Player
 end
 
 --// Aimbot Functions \\--
@@ -445,6 +434,16 @@ function getPlayers()
 	return Plrs
 end
 
+function getPlayerFromString(String)
+	local Player
+	if string.find(String, "|") then
+		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
+	else
+		Player = Players:FindFirstChild(string.sub(String, 2, #String))
+	end
+	return Player
+end
+
 --// Fly \\--
 
 function sFLY(vfly)
@@ -638,6 +637,20 @@ local function Show_Body(Plr)
 	end
 end
 
+function hideESP(Line, Box, TL, HL)
+	Line.Visible = false
+	Box.Visible = false
+	
+	if TL then
+		TL.TextTransparency = 1
+		TL.TextStrokeTransparency = 1
+	end
+	
+	if HL then
+		HL.Enabled = false
+	end
+end
+
 function Esp_Activation(Plr)
 	if Plr ~= LocalPlayer then
 		local DataESPholder = Instance.new("Folder")
@@ -670,7 +683,7 @@ function Esp_Activation(Plr)
 		TL.ZIndex = 10
 		TL.Parent = BBG
 		
-		local Highlight = Instance.new("Highlight")
+		local Highlight = Instance.new("Highlight") --Only 31 can be visible at a time due to Roblox limitations.
 		Highlight.FillTransparency = 1
 		Highlight.Enabled = espVariables.Highlight_ESP
 		Highlight.DepthMode = "AlwaysOnTop"
@@ -775,19 +788,8 @@ function Esp_Activation(Plr)
 						
 						if espVariables.Hide_Team then
 							if Plr.TeamColor == LocalPlayer.TeamColor then
-								TracerLine.Visible = false
-								TracerBox.Visible = false
-								
-								if TL then
-									TL.TextTransparency = 1
-									TL.TextStrokeTransparency = 1
-								end
-								
+								hideESP(TracerLine, TracerBox, TL, HL)
 								Show_Body(Plr)
-								
-								if HL then
-									HL.Enabled = false
-								end
 							else
 								TracerLine.Visible = espVariables.Tracers_Visible
 								TracerBox.Visible = espVariables.Box_ESP
@@ -817,43 +819,13 @@ function Esp_Activation(Plr)
 							end
 						end
 					else
-						TracerLine.Visible = false
-						TracerBox.Visible = false
-						
-						if TL then
-							TL.TextTransparency = 1
-							TL.TextStrokeTransparency = 1
-						end
-						
-						if HL then
-							HL.Enabled = false
-						end
+						hideESP(TracerLine, TracerBox, TL, HL)
 					end
 				else
-					TracerLine.Visible = false
-					TracerBox.Visible = false
-					
-					if TL then
-						TL.TextTransparency = 1
-						TL.TextStrokeTransparency = 1
-					end
-					
-					if HL then
-						HL.Enabled = false
-					end
+					hideESP(TracerLine, TracerBox, TL, HL)
 				end
 			else
-				TracerLine.Visible = false
-				TracerBox.Visible = false
-				
-				if TL then
-					TL.TextTransparency = 1
-					TL.TextStrokeTransparency = 1
-				end
-				
-				if HL then
-					HL.Enabled = false
-				end
+				hideESP(TracerLine, TracerBox, TL, HL)
 			end
 			
 			if BBG and TL then
@@ -922,7 +894,7 @@ end
 
 --// UI \\--
 
-local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
+local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xowie89/MaterialLua/master/Module.lua"))()
 
 MainGui = Material.Load({
 	Title = "Command UI",
