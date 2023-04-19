@@ -614,13 +614,7 @@ end
 
 local function show_Data(Obj)
 	if Obj then
-		if espVariables.Show_Info then
-			Obj.TextTransparency = 0
-			Obj.TextStrokeTransparency = 0
-		else
-			Obj.TextTransparency = 1
-			Obj.TextStrokeTransparency = 1
-		end
+		Obj.Visible = espVariables.Show_Info
 	end
 end
 
@@ -637,13 +631,13 @@ local function Show_Body(Plr)
 	end
 end
 
-function hideESP(Line, Box, TL, HL)
+function hideESP(Line, Box, BoxOut, TL, HL)
 	Line.Visible = false
 	Box.Visible = false
+	BoxOut.Visible = false
 	
 	if TL then
-		TL.TextTransparency = 1
-		TL.TextStrokeTransparency = 1
+		TL.Visible = false
 	end
 	
 	if HL then
@@ -677,11 +671,16 @@ function Esp_Activation(Plr)
 		TL.BackgroundTransparency = 1
 		TL.Size = UDim2.new(1, 0, 1, 0)
 		TL.TextScaled = true
-		TL.TextColor3 = Color3.new(1, 1, 1)
+		TL.TextStrokeTransparency = 0
 		TL.TextYAlignment = Enum.TextYAlignment.Center
+		TL.TextXAlignment = Enum.TextXAlignment.Center
 		TL.Text = Plr.Name
 		TL.ZIndex = 10
 		TL.Parent = BBG
+		
+		local UIStroke = Instance.new("UIStroke")
+		UIStroke.Thickness = 2
+		UIStroke.Parent = TL
 		
 		local Highlight = Instance.new("Highlight") --Only 31 can be visible at a time due to Roblox limitations.
 		Highlight.FillTransparency = 1
@@ -690,10 +689,25 @@ function Esp_Activation(Plr)
 		Highlight.Parent = HighlightESPholder
 		
 		local TracerLine = Drawingnew("Line")
+		TracerLine.Thickness = 1
+		TracerLine.Transparency = 1
+		TracerLine.ZIndex = 10
+		
 		local TracerBox = Drawingnew("Square")
+		TracerBox.Filled = false
+		TracerBox.Thickness = 1
+		TracerBox.Transparency = 1
+		TracerBox.ZIndex = 10
+		
+		local TracerBoxOutline = Drawingnew("Square")
+		TracerBoxOutline.Filled = false
+		TracerBoxOutline.Thickness = 3
+		TracerBoxOutline.Transparency = 1
+		TracerBoxOutline.Color = Color3fromRGB(0, 0, 0)
+		TracerBoxOutline.ZIndex = 9
 		
 		RunService.RenderStepped:Connect(function()
-			if Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+			if Plr.Character and getRoot(Plr.Character) and LocalPlayer.Character and getRoot(LocalPlayer.Character) then
 				local Human = Plr.Character:FindFirstChildOfClass("Humanoid")
 				
 				local DataESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Data")
@@ -703,25 +717,17 @@ function Esp_Activation(Plr)
 				local BBG
 				local TL
 				
-				local HumanoidRootPart_Position, HumanoidRootPart_Size = Plr.Character.HumanoidRootPart.CFrame, Plr.Character.HumanoidRootPart.Size * 1
+				local HumanoidRootPart_Position, HumanoidRootPart_Size = getRoot(Plr.Character).CFrame, getRoot(Plr.Character).Size * 1
 				local Vector, OnScreen = Camera:WorldToViewportPoint(HumanoidRootPart_Position * CFramenew(0, -HumanoidRootPart_Size.Y, 0).p)
 				
 				local cframe = Plr.Character:GetModelCFrame()
 				local position, visible, depth = wtvp(cframe.Position)
-				local scaleFactor = 1 / (depth * mathTan(mathRad(Camera.FieldOfView / 2)) * 2) * 1000
+				local scaleFactor = 1 / (depth * mathTan(mathRad(Camera.FieldOfView * .5)) * 2) * 1000
 				local width, height = round(4 * scaleFactor, 5 * scaleFactor)
 				local x, y = round(position.X, position.Y)
 				
-				TracerLine.Thickness = 1
-				TracerLine.Transparency = .75
-				TracerLine.ZIndex = 10
 				TracerLine.Color = Plr.TeamColor.Color
-				
-				TracerBox.Thickness = 2
-				TracerBox.Transparency = .75
-				TracerBox.ZIndex = 10
 				TracerBox.Color = Plr.TeamColor.Color
-				TracerBox.Filled = false
 				
 				TracerLine.From = Vector2new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
 				
@@ -783,16 +789,21 @@ function Esp_Activation(Plr)
 				if OnScreen and visible and Human then
 					if Human.Health > 0 then
 						TracerLine.To = Vector2new(Vector.X, Vector.Y)
+						
 						TracerBox.Size = Vector2new(width, height)
 						TracerBox.Position = Vector2new(round(x - width / 2, y - height / 2))
 						
+						TracerBoxOutline.Size = Vector2new(width, height)
+						TracerBoxOutline.Position = Vector2new(round(x - width / 2, y - height / 2))
+						
 						if espVariables.Hide_Team then
 							if Plr.TeamColor == LocalPlayer.TeamColor then
-								hideESP(TracerLine, TracerBox, TL, HL)
+								hideESP(TracerLine, TracerBox, TracerBoxOutline, TL, HL)
 								Show_Body(Plr)
 							else
 								TracerLine.Visible = espVariables.Tracers_Visible
 								TracerBox.Visible = espVariables.Box_ESP
+								TracerBoxOutline.Visible = espVariables.Box_ESP
 								
 								if TL then
 									show_Data(TL)
@@ -807,6 +818,7 @@ function Esp_Activation(Plr)
 						else
 							TracerLine.Visible = espVariables.Tracers_Visible
 							TracerBox.Visible = espVariables.Box_ESP
+							TracerBoxOutline.Visible = espVariables.Box_ESP
 							
 							if TL then
 								show_Data(TL)
@@ -819,25 +831,24 @@ function Esp_Activation(Plr)
 							end
 						end
 					else
-						hideESP(TracerLine, TracerBox, TL, HL)
+						hideESP(TracerLine, TracerBox, TracerBoxOutline, TL, HL)
 					end
 				else
-					hideESP(TracerLine, TracerBox, TL, HL)
+					hideESP(TracerLine, TracerBox, TracerBoxOutline, TL, HL)
 				end
 			else
-				hideESP(TracerLine, TracerBox, TL, HL)
+				hideESP(TracerLine, TracerBox, TracerBoxOutline, TL, HL)
 			end
 			
-			if BBG and TL then
-				if Plr.Character and Plr.Character:FindFirstChild('Head') and getRoot(Plr.Character) and LocalPlayer.Character and getRoot(LocalPlayer.Character) then
-					BBG.Adornee = Plr.Character.Head
-					
-					local pos = mathFloor(LocalPlayer:DistanceFromCharacter(getRoot(Plr.Character).Position))
-					if Plr.Name ~= Plr.DisplayName then
-						TL.Text = '@'..Plr.Name..'\n['..Plr.DisplayName..']\n('..pos..')'
-					else
-						TL.Text = '@'..Plr.Name..'\n('..pos..')'
-					end
+			if BBG and TL and Plr.Character and Plr.Character:FindFirstChild("Head") then
+				BBG.Adornee = Plr.Character.Head
+				TL.TextColor = Plr.TeamColor
+				
+				local pos = mathFloor(LocalPlayer:DistanceFromCharacter(getRoot(Plr.Character).Position))
+				if Plr.Name ~= Plr.DisplayName then
+					TL.Text = '@'..Plr.Name..'\n['..Plr.DisplayName..']\n('..pos..')'
+				else
+					TL.Text = '@'..Plr.Name..'\n('..pos..')'
 				end
 			end
 		end)
@@ -845,6 +856,7 @@ function Esp_Activation(Plr)
 		Players.PlayerRemoving:Connect(function()
 			TracerLine.Visible = false
 			TracerBox.Visible = false
+			TracerBoxOutline.Visible = false
 		end)
 	end
 end
