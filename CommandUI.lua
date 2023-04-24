@@ -1075,7 +1075,7 @@ Title_1_Object_8 = Title_1.Button({
 --// Teleport/Spy \\--
 
 Title_2_Object_1 = Title_2.Toggle({
-	Text = "Click Teleport (Hold L Contol/Shift)",
+	Text = "Click Teleport (Hold L Ctrl/Shift)",
 	Callback = function(Value)
 		getgenv().settings.click_Tele = Value
 		saveSettings()
@@ -1270,7 +1270,6 @@ Title_3_Object_5 = Title_3.Toggle({
 Title_3_Object_6 = Title_3.TextField({
 	Text = "Player Search",
 	Callback = function(Value)
-		print(Value)
 		GetList()
 	end,
 	Menu = {
