@@ -21,7 +21,7 @@ local HttpService = game:GetService('HttpService')
 local RunService = game:GetService('RunService')
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
-local COREGUI = game:GetService("CoreGui")
+local COREGUI = game:GetService('CoreGui')
 
 --// Cache \\--
 
@@ -70,7 +70,7 @@ getgenv().CommandUI = {
 	},
 	
 	ESP_Variables = {
-		Tracers_Visible = false,
+		Tracer_ESP = false,
 		Highlight_ESP = false,
 		Show_Info = false,
 		Hide_Team = false,
@@ -79,7 +79,6 @@ getgenv().CommandUI = {
 	},
 	
 	Teleport_Variables = {
-		Held_Button = false,
 		loop_Tele = false,
 		target = false
 	},
@@ -145,8 +144,8 @@ if isfile("CommandUISettings.txt") then
 	getgenv().settings = HttpService:JSONDecode(readfile('CommandUISettings.txt'))
 end
 
-local sNames = {"auto_Shrink", "click_Tele"}
-local sValues = {false, false}
+local sNames = {"auto_Shrink", "click_Tele", "click_Delete"}
+local sValues = {false, false, false}
 
 if #getgenv().settings ~= sNames then
 	for i, v in ipairs(sNames) do
@@ -424,10 +423,21 @@ function getPlayers()
 	local Plrs = {}
 	for _,v in pairs(Players:GetPlayers()) do
 		if v ~= LocalPlayer then
-			if v.Name ~= v.DisplayName then
-				table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
+			local Field = stringupper(Title_3_Object_6.GetText())
+			if Field ~= "" then
+				if string.match(stringupper(v.Name), Field) or string.match(stringupper(v.DisplayName), Field) then
+					if v.Name ~= v.DisplayName then
+						table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
+					else
+						table.insert(Plrs, "@"..v.Name)
+					end
+				end
 			else
-				table.insert(Plrs, "@"..v.Name)
+				if v.Name ~= v.DisplayName then
+					table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
+				else
+					table.insert(Plrs, "@"..v.Name)
+				end
 			end
 		end
 	end
@@ -612,12 +622,6 @@ local wtvp = function(...)
 	return Vector2new(a.X, a.Y), b, a.Z
 end
 
-local function show_Data(Obj)
-	if Obj then
-		Obj.Visible = espVariables.Show_Info
-	end
-end
-
 local function Show_Body(Plr)
 	local BodyESPfolder = COREGUI:FindFirstChild(Plr.Name.."_Body")
 	if BodyESPfolder and Plr and #BodyESPfolder:GetChildren() > 0 then
@@ -631,7 +635,7 @@ local function Show_Body(Plr)
 	end
 end
 
-function hideESP(Line, Box, BoxOut, TL, HL)
+local function hideESP(Line, Box, BoxOut, TL, HL)
 	Line.Visible = false
 	Box.Visible = false
 	BoxOut.Visible = false
@@ -671,7 +675,6 @@ function Esp_Activation(Plr)
 		TL.BackgroundTransparency = 1
 		TL.Size = UDim2.new(1, 0, 1, 0)
 		TL.TextScaled = true
-		TL.TextStrokeTransparency = 0
 		TL.TextYAlignment = Enum.TextYAlignment.Center
 		TL.TextXAlignment = Enum.TextXAlignment.Center
 		TL.Text = Plr.Name
@@ -697,14 +700,14 @@ function Esp_Activation(Plr)
 		TracerBox.Filled = false
 		TracerBox.Thickness = 1
 		TracerBox.Transparency = 1
-		TracerBox.ZIndex = 10
+		TracerBox.ZIndex = 11
 		
 		local TracerBoxOutline = Drawingnew("Square")
 		TracerBoxOutline.Filled = false
 		TracerBoxOutline.Thickness = 3
 		TracerBoxOutline.Transparency = 1
 		TracerBoxOutline.Color = Color3fromRGB(0, 0, 0)
-		TracerBoxOutline.ZIndex = 9
+		TracerBoxOutline.ZIndex = 10
 		
 		RunService.RenderStepped:Connect(function()
 			if Plr.Character and getRoot(Plr.Character) and LocalPlayer.Character and getRoot(LocalPlayer.Character) then
@@ -786,13 +789,11 @@ function Esp_Activation(Plr)
 					HL.OutlineColor = Plr.TeamColor.Color
 				end
 				
-				if OnScreen and visible and Human then
+				if OnScreen and visible and Human and TL and HL then
 					if Human.Health > 0 then
 						TracerLine.To = Vector2new(Vector.X, Vector.Y)
-						
 						TracerBox.Size = Vector2new(width, height)
 						TracerBox.Position = Vector2new(round(x - width / 2, y - height / 2))
-						
 						TracerBoxOutline.Size = Vector2new(width, height)
 						TracerBoxOutline.Position = Vector2new(round(x - width / 2, y - height / 2))
 						
@@ -801,34 +802,20 @@ function Esp_Activation(Plr)
 								hideESP(TracerLine, TracerBox, TracerBoxOutline, TL, HL)
 								Show_Body(Plr)
 							else
-								TracerLine.Visible = espVariables.Tracers_Visible
+								TracerLine.Visible = espVariables.Tracer_ESP
 								TracerBox.Visible = espVariables.Box_ESP
 								TracerBoxOutline.Visible = espVariables.Box_ESP
-								
-								if TL then
-									show_Data(TL)
-								end
-								
+								TL.Visible = espVariables.Show_Info
+								HL.Enabled = espVariables.Highlight_ESP
 								Show_Body(Plr)
-								
-								if HL then
-									HL.Enabled = espVariables.Highlight_ESP
-								end
 							end
 						else
-							TracerLine.Visible = espVariables.Tracers_Visible
+							TracerLine.Visible = espVariables.Tracer_ESP
 							TracerBox.Visible = espVariables.Box_ESP
 							TracerBoxOutline.Visible = espVariables.Box_ESP
-							
-							if TL then
-								show_Data(TL)
-							end
-							
+							TL.Visible = espVariables.Show_Info
+							HL.Enabled = espVariables.Highlight_ESP
 							Show_Body(Plr)
-							
-							if HL then
-								HL.Enabled = espVariables.Highlight_ESP
-							end
 						end
 					else
 						hideESP(TracerLine, TracerBox, TracerBoxOutline, TL, HL)
@@ -1088,7 +1075,7 @@ Title_1_Object_8 = Title_1.Button({
 --// Teleport/Spy \\--
 
 Title_2_Object_1 = Title_2.Toggle({
-	Text = "Click Teleport (Hold LContol/LShift)",
+	Text = "Click Teleport (Hold L Contol/Shift)",
 	Callback = function(Value)
 		getgenv().settings.click_Tele = Value
 		saveSettings()
@@ -1267,6 +1254,28 @@ Title_3_Object_4 = Title_3.Button({
 			MainGui.Banner({
 				Text = "Rejoins the current server."
 			})
+		end
+	}
+})
+
+Title_3_Object_5 = Title_3.Toggle({
+	Text = "Click Delete (Hold X)",
+	Callback = function(Value)
+		getgenv().settings.click_Delete = Value
+		saveSettings()
+	end,
+	Enabled = getgenv().settings.click_Delete
+})
+
+Title_3_Object_6 = Title_3.TextField({
+	Text = "Player Search",
+	Callback = function(Value)
+		print(Value)
+		GetList()
+	end,
+	Menu = {
+		PS = function(self)
+			self.SetText("Player Search")
 		end
 	}
 })
@@ -1525,14 +1534,6 @@ Title_6_Object_1 = Title_6.Toggle({
 })
 
 Title_6_Object_2 = Title_6.Toggle({
-	Text = "Box ESP",
-	Callback = function(Value)
-		espVariables.Box_ESP = Value
-	end,
-	Enabled = espVariables.Box_ESP
-})
-
-Title_6_Object_3 = Title_6.Toggle({
 	Text = "Highlight ESP",
 	Callback = function(Value)
 		espVariables.Highlight_ESP = Value
@@ -1540,12 +1541,20 @@ Title_6_Object_3 = Title_6.Toggle({
 	Enabled = espVariables.Highlight_ESP
 })
 
-Title_6_Object_4 = Title_6.Toggle({
-	Text = "Tracers",
+Title_6_Object_3 = Title_6.Toggle({
+	Text = "Box ESP",
 	Callback = function(Value)
-		espVariables.Tracers_Visible = Value
+		espVariables.Box_ESP = Value
 	end,
-	Enabled = espVariables.Tracers_Visible
+	Enabled = espVariables.Box_ESP
+})
+
+Title_6_Object_4 = Title_6.Toggle({
+	Text = "Tracer ESP",
+	Callback = function(Value)
+		espVariables.Tracer_ESP = Value
+	end,
+	Enabled = espVariables.Tracer_ESP
 })
 
 Title_6_Object_5 = Title_6.Toggle({
@@ -1598,6 +1607,7 @@ Title_6_Object_10 = Title_6.Toggle({
 
 Title_6_Object_11 = Title_6.Dropdown({
 	Text = "Target",
+	Default = aimbotVariables.LockPart,
 	Callback = function(Value)
 		aimbotVariables.LockPart = Value
 	end,
@@ -1663,24 +1673,16 @@ GetList()
 --// Click Teleport \\--
 
 Mouse.Button1Down:Connect(function()
-	if teleportVariables.Held_Button and getgenv().settings.click_Tele then
+	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and getgenv().settings.click_Tele then
 		local root = LocalPlayer.Character.HumanoidRootPart
 		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
 		local offset = pos-root.Position
 		GetUp()
 		root.CFrame = root.CFrame + offset
 	end
-end)
-
-UserInputService.InputBegan:Connect(function(key, gp)
-	if key.KeyCode == Enum.KeyCode.LeftControl or key.KeyCode == Enum.KeyCode.LeftShift then
-		teleportVariables.Held_Button = true
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(key, gp)
-	if key.KeyCode == Enum.KeyCode.LeftControl or key.KeyCode == Enum.KeyCode.LeftShift then
-		teleportVariables.Held_Button = false
+	
+	if UserInputService:IsKeyDown(Enum.KeyCode.X) and getgenv().settings.click_Delete and Mouse.Target then
+		Mouse.Target:Destroy()
 	end
 end)
 
