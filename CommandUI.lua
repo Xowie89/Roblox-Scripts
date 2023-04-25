@@ -82,7 +82,7 @@ getgenv().CommandUI = {
 	
 	Teleport_Variables = {
 		loop_Tele = false,
-		target = false
+		tele_Target = false
 	},
 	
 	Lighting_Variables = {
@@ -167,11 +167,12 @@ local function saveSettings()
 	end
 end
 
---// Functions \\--
+--// Random Useful Functions \\--
 
 function GetUp()
-	if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').SeatPart then
-		LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = false
+	local Human = LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+	if Human and Human.SeatPart then
+		Human.Sit = false
 		wait(.1)
 	end
 end
@@ -192,99 +193,279 @@ function getTorso(x)
 	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
 end
 
---// Aimbot Functions \\--
+--// Server Hop \\--
 
-local function ConvertVector(Vector)
-	return Vector2new(Vector.X, Vector.Y)
-end
-
-local function CancelLock()
-	aimbotVariables.Locked = nil
-	aimbotVariables.FOVCircle.Color = aimbotVariables.Color
-	UserInputService.MouseDeltaSensitivity = OriginalSensitivity
-
-	if Animation then
-		Animation:Cancel()
-	end
-end
-
-local function GetClosestPlayer()
-	if not aimbotVariables.Locked then
-		RequiredDistance = 120
-
-		for _, v in next, Players:GetPlayers() do
-			if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(aimbotVariables.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
-				if aimbotVariables.Team_Check and v.TeamColor == LocalPlayer.TeamColor then continue end
-				if v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
-				if aimbotVariables.Wall_Check and #(Camera:GetPartsObscuringTarget({v.Character[aimbotVariables.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
-
-				local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[aimbotVariables.LockPart].Position); Vector = ConvertVector(Vector)
-				local Distance = (UserInputService:GetMouseLocation() - Vector).Magnitude
-
-				if Distance < RequiredDistance and OnScreen then
-					RequiredDistance = Distance
-					aimbotVariables.Locked = v
+local function ServerHop()
+	if serverVariables.minimumPlayers > serverVariables.maximumPlayers then return end
+	local foundserver = false
+	local searched = false
+	local pid = game.PlaceId
+	local Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
+	LocalPlayer:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
+	task.spawn(function()
+		repeat
+			if searched then
+				if not Servers.nextPageCursor then
+					warn("All servers searched")
+				end
+				Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
+			end
+			
+			for i,v in pairs(Servers.data) do
+				if v.playing <= serverVariables.maximumPlayers and v.playing >= serverVariables.minimumPlayers then
+					foundserver = true
+					TeleportService:TeleportToPlaceInstance(pid, v.id)
 				end
 			end
-		end
-	elseif (UserInputService:GetMouseLocation() - ConvertVector(Camera:WorldToViewportPoint(aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position))).Magnitude > RequiredDistance then
-		CancelLock()
-	end
+			
+			searched = true
+			wait(1)
+		until foundserver
+	end)
 end
 
-local function Load()
-	OriginalSensitivity = UserInputService.MouseDeltaSensitivity
+--// Teleport \\--
 
-	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
-		if aimbotVariables.Aimbot then
-			aimbotVariables.FOVCircle.Radius = 120
-			aimbotVariables.FOVCircle.Thickness = 1
-			aimbotVariables.FOVCircle.Filled = false
-			aimbotVariables.FOVCircle.NumSides = 60
-			aimbotVariables.FOVCircle.Color = aimbotVariables.Color
-			aimbotVariables.FOVCircle.Transparency = .5
-			aimbotVariables.FOVCircle.Visible = aimbotVariables.Aimbot
-			aimbotVariables.FOVCircle.Position = Vector2new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
-		else
-			aimbotVariables.FOVCircle.Visible = false
-		end
+function Tele(Plr)
+	task.spawn(function()
+		repeat
+			local tPlr = getPlayerFromString(Plr)
+			if tPlr then
+				local myChar = LocalPlayer.Character
+				local tChar = tPlr.Character
+				if myChar and tChar then
+					local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+					local tRoot = tChar:FindFirstChild("HumanoidRootPart")
+					if myRoot and tRoot then
+						GetUp()
+						myRoot.CFrame = tRoot.CFrame
+					end
+				end
+			end
+			wait()
+		until not teleportVariables.loop_Tele or teleportVariables.tele_Target ~= Plr or not Plr or not tPlr or not teleportVariables.tele_Target
+	end)
+end
 
-		if Running and aimbotVariables.Aimbot then
-			GetClosestPlayer()
+--// Player Dropdown Lists \\--
 
-			if aimbotVariables.Locked then
-				if aimbotVariables.Third_Person then
-					local Vector = Camera:WorldToViewportPoint(aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position)
-					mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * 1, (Vector.Y - UserInputService:GetMouseLocation().Y) * 1)
+function getPlayers()
+	local Plrs = {}
+	for _,v in pairs(Players:GetPlayers()) do
+		if v ~= LocalPlayer then
+			local Field = stringupper(teleTab_Player_Search.GetText())
+			if Field ~= "" then
+				if string.match(stringupper(v.Name), Field) or string.match(stringupper(v.DisplayName), Field) then
+					if v.Name ~= v.DisplayName then
+						table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
+					else
+						table.insert(Plrs, "@"..v.Name)
+					end
+				end
+			else
+				if v.Name ~= v.DisplayName then
+					table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
 				else
-					Camera.CFrame = CFramenew(Camera.CFrame.Position, aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position)
-					UserInputService.MouseDeltaSensitivity = 0
+					table.insert(Plrs, "@"..v.Name)
 				end
-
-				aimbotVariables.FOVCircle.Color = aimbotVariables.LockedColor
 			end
 		end
-	end)
+	end
+	return Plrs
+end
 
-	ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(Input)
-		if not Typing then
-			pcall(function()
-				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Enum.KeyCode[#aimbotVariables.TriggerKey == 1 and stringupper(aimbotVariables.TriggerKey) or aimbotVariables.TriggerKey] or Input.UserInputType == Enum.UserInputType[aimbotVariables.TriggerKey] then
-					Running = true
+function getPlayerFromString(String)
+	local Player
+	if string.find(String, "|") then
+		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
+	else
+		Player = Players:FindFirstChild(string.sub(String, 2, #String))
+	end
+	return Player
+end
+
+function GetList()
+	local Plr_List = getPlayers()
+	teleTab_Teleport_To_Dropdown:SetOptions(Plr_List)
+	teleTab_View_Dropdown:SetOptions(Plr_List)
+	teleTab_Headsit_Dropdown:SetOptions(Plr_List)
+	flyTab_Bang_Dropdown:SetOptions(Plr_List)
+	flyTab_Facesit_Dropdown:SetOptions(Plr_List)
+end
+
+--// Stop Viewing \\--
+
+function StopFreecam()
+	if not fcRunning then return end
+	
+	Input.StopCapture()
+	RunService:UnbindFromRenderStep("Freecam")
+	PlayerState.Pop()
+	workspace.Camera.FieldOfView = 70
+	fcRunning = false
+end
+
+--// Respawn Character \\--
+
+function respawn(Plr)
+	local char = Plr.Character
+	
+	if char:FindFirstChildOfClass("Humanoid") then
+		char:FindFirstChildOfClass("Humanoid"):ChangeState(15)
+	end
+	
+	char:ClearAllChildren()
+	
+	local newChar = Instance.new("Model")
+	newChar.Parent = workspace
+	Plr.Character = newChar
+	wait()
+	Plr.Character = char
+	newChar:Destroy()
+end
+
+--// Refresh Character \\--
+
+function refresh(Plr)
+	playerVariables.refreshCmd = true
+	local Human = Plr.Character and Plr.Character:FindFirstChildOfClass("Humanoid", true)
+	local pos = Human and Human.RootPart and Human.RootPart.CFrame
+	local pos1 = Camera.CFrame
+	
+	respawn(Plr)
+	
+	task.spawn(function()
+		Plr.CharacterAdded:Wait():WaitForChild("Humanoid").RootPart.CFrame, Camera.CFrame = pos, wait() and pos1
+		playerVariables.refreshCmd = false
+	end)
+end
+
+--// Character Died \\--
+
+function onDied()
+	task.spawn(function()
+		if pcall(function() LocalPlayer.Character:FindFirstChildOfClass('Humanoid') end) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
+				if getRoot(LocalPlayer.Character) then
+					playerVariables.lastDeath = getRoot(LocalPlayer.Character).CFrame
 				end
 			end)
+			
+			if getgenv().settings.auto_Shrink then
+				spawn(shrink)
+			end
+		else
+			wait(2)
+			onDied()
 		end
 	end)
+end
 
-	ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
-		if not Typing then
-			pcall(function()
-				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Enum.KeyCode[#aimbotVariables.TriggerKey == 1 and stringupper(aimbotVariables.TriggerKey) or aimbotVariables.TriggerKey] or Input.UserInputType == Enum.UserInputType[aimbotVariables.TriggerKey] then
-					Running = false; CancelLock()
-				end
-			end)
+--// Respawn \\--
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	NOFLY()
+	repeat wait() until getRoot(char)
+	onDied()
+end)
+
+--// PlayerAdded \\--
+
+Players.PlayerAdded:Connect(function(Plr)
+	GetList()
+	Esp_Activation(Plr)
+end)
+
+--// PlayerRemoving \\--
+
+Players.PlayerRemoving:Connect(function(Plr)
+	GetList()
+	
+	for i,v in pairs(COREGUI:GetChildren()) do
+		if v.Name == Plr.Name..'_Data' or v.Name == Plr.Name..'_Body' or v.Name == Plr.Name.."_Highlight" then
+			v:Destroy()
 		end
-	end)
+	end
+	
+	if playerVariables.viewing and Plr == playerVariables.viewing then
+		Camera.CameraSubject = LocalPlayer.Character
+		playerVariables.viewing = nil
+		if viewDied then
+			viewDied:Disconnect()
+			viewChanged:Disconnect()
+		end
+	end
+end)
+
+--// Click Teleport \\--
+
+Mouse.Button1Down:Connect(function()
+	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and getgenv().settings.click_Tele then
+		local root = LocalPlayer.Character.HumanoidRootPart
+		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
+		local offset = pos-root.Position
+		GetUp()
+		root.CFrame = root.CFrame + offset
+	end
+	
+	if UserInputService:IsKeyDown(Enum.KeyCode.X) and getgenv().settings.click_Delete and Mouse.Target then
+		Mouse.Target:Destroy()
+	end
+end)
+
+--// Typing Check \\--
+
+ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
+	Typing = true
+end)
+
+ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
+	Typing = false
+end)
+
+--// Bang \\--
+
+function Bang(Plr)
+	Unbang()
+	wait()
+	local tPlr = getPlayerFromString(Plr)
+	if tPlr then
+		playerVariables.bangAnim = Instance.new("Animation")
+		if not r15(LocalPlayer) then
+			playerVariables.bangAnim.AnimationId = "rbxassetid://148840371"
+		else
+			playerVariables.bangAnim.AnimationId = "rbxassetid://5918726674"
+		end
+		
+		bang = LocalPlayer.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(playerVariables.bangAnim)
+		bang:Play(.1, 1, 1)
+		bang:AdjustSpeed(3)
+		
+		local bangplr = tPlr
+		playerVariables.bangDied = LocalPlayer.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
+			playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
+			bang:Stop()
+			playerVariables.bangAnim:Destroy()
+			playerVariables.bangDied:Disconnect()
+		end)
+		
+		local bangOffet = CFramenew(0, 0, 1.1)
+		playerVariables.bangLoop = RunService.Stepped:Connect(function()
+			pcall(function()
+				local otherRoot = getTorso(tPlr.Character)
+				getRoot(LocalPlayer.Character).CFrame = otherRoot.CFrame * bangOffet
+			end)
+		end)
+	end
+end
+
+function Unbang()
+	if playerVariables.bangLoop then
+		playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
+		playerVariables.bangDied:Disconnect()
+		bang:Stop()
+		playerVariables.bangAnim:Destroy()
+	end
 end
 
 --// Shrink \\--
@@ -364,95 +545,6 @@ local shrink = function()
 			warn(err)
 		end
 	end)
-end
-
---// Server Hop \\--
-
-local function ServerHop()
-	if serverVariables.minimumPlayers > serverVariables.maximumPlayers then return end
-	local foundserver = false
-	local searched = false
-	local pid = game.PlaceId
-	local Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
-	LocalPlayer:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
-	task.spawn(function()
-		repeat
-			if searched then
-				if not Servers.nextPageCursor then
-					warn("All servers searched")
-				end
-				Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
-			end
-			
-			for i,v in pairs(Servers.data) do
-				if v.playing <= serverVariables.maximumPlayers and v.playing >= serverVariables.minimumPlayers then
-					foundserver = true
-					TeleportService:TeleportToPlaceInstance(pid, v.id)
-				end
-			end
-			
-			searched = true
-			wait(1)
-		until foundserver
-	end)
-end
-
---// Teleport \\--
-
-function Tele(Plr)
-	task.spawn(function()
-		repeat
-			local tPlr = getPlayerFromString(Plr)
-			if tPlr then
-				local myChar = LocalPlayer.Character
-				local tChar = tPlr.Character
-				if myChar and tChar then
-					local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-					local tRoot = tChar:FindFirstChild("HumanoidRootPart")
-					if myRoot and tRoot then
-						GetUp()
-						myRoot.CFrame = tRoot.CFrame
-					end
-				end
-			end
-			wait()
-		until not teleportVariables.loop_Tele or teleportVariables.target ~= Plr or not Plr or not tPlr or not teleportVariables.target
-	end)
-end
-
-function getPlayers()
-	local Plrs = {}
-	for _,v in pairs(Players:GetPlayers()) do
-		if v ~= LocalPlayer then
-			local Field = stringupper(teleTab_Player_Search.GetText())
-			if Field ~= "" then
-				if string.match(stringupper(v.Name), Field) or string.match(stringupper(v.DisplayName), Field) then
-					if v.Name ~= v.DisplayName then
-						table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
-					else
-						table.insert(Plrs, "@"..v.Name)
-					end
-				end
-			else
-				if v.Name ~= v.DisplayName then
-					table.insert(Plrs, "@"..v.Name.." | "..v.DisplayName)
-				else
-					table.insert(Plrs, "@"..v.Name)
-				end
-			end
-		end
-	end
-	return Plrs
-end
-
-function getPlayerFromString(String)
-	local Player
-	if string.find(String, "|") then
-		Player = Players:FindFirstChild(string.sub(String, 2, string.find(String, " ") - 1))
-	else
-		Player = Players:FindFirstChild(string.sub(String, 2, #String))
-	end
-	return Player
 end
 
 --// Fly \\--
@@ -563,52 +655,7 @@ function NOFLY()
 	pcall(function() Camera.CameraType = Enum.CameraType.Custom end)
 end
 
---// Bang \\--
-
-function Bang(Plr)
-	Unbang()
-	wait()
-	local tPlr = getPlayerFromString(Plr)
-	if tPlr then
-		playerVariables.bangAnim = Instance.new("Animation")
-		if not r15(LocalPlayer) then
-			playerVariables.bangAnim.AnimationId = "rbxassetid://148840371"
-		else
-			playerVariables.bangAnim.AnimationId = "rbxassetid://5918726674"
-		end
-		
-		bang = LocalPlayer.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(playerVariables.bangAnim)
-		bang:Play(.1, 1, 1)
-		bang:AdjustSpeed(3)
-		
-		local bangplr = tPlr
-		playerVariables.bangDied = LocalPlayer.Character:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
-			playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
-			bang:Stop()
-			playerVariables.bangAnim:Destroy()
-			playerVariables.bangDied:Disconnect()
-		end)
-		
-		local bangOffet = CFramenew(0, 0, 1.1)
-		playerVariables.bangLoop = RunService.Stepped:Connect(function()
-			pcall(function()
-				local otherRoot = getTorso(tPlr.Character)
-				getRoot(LocalPlayer.Character).CFrame = otherRoot.CFrame * bangOffet
-			end)
-		end)
-	end
-end
-
-function Unbang()
-	if playerVariables.bangLoop then
-		playerVariables.bangLoop = playerVariables.bangLoop:Disconnect()
-		playerVariables.bangDied:Disconnect()
-		bang:Stop()
-		playerVariables.bangAnim:Destroy()
-	end
-end
-
---// All ESP \\--
+--// ESP \\--
 
 local round = function(...) 
 	local a = {}
@@ -849,48 +896,111 @@ function Esp_Activation(Plr)
 	end
 end
 
---// Other Functions \\--
+--// Aimbot \\--
 
-function StopFreecam()
-	if not fcRunning then return end
-	
-	Input.StopCapture()
-	RunService:UnbindFromRenderStep("Freecam")
-	PlayerState.Pop()
-	workspace.Camera.FieldOfView = 70
-	fcRunning = false
+local function ConvertVector(Vector)
+	return Vector2new(Vector.X, Vector.Y)
 end
 
-function respawn(Plr)
-	local char = Plr.Character
-	
-	if char:FindFirstChildOfClass("Humanoid") then
-		char:FindFirstChildOfClass("Humanoid"):ChangeState(15)
+local function CancelLock()
+	aimbotVariables.Locked = nil
+	aimbotVariables.FOVCircle.Color = aimbotVariables.Color
+	UserInputService.MouseDeltaSensitivity = OriginalSensitivity
+
+	if Animation then
+		Animation:Cancel()
 	end
-	
-	char:ClearAllChildren()
-	
-	local newChar = Instance.new("Model")
-	newChar.Parent = workspace
-	Plr.Character = newChar
-	wait()
-	Plr.Character = char
-	newChar:Destroy()
 end
 
-function refresh(Plr)
-	playerVariables.refreshCmd = true
-	local Human = Plr.Character and Plr.Character:FindFirstChildOfClass("Humanoid", true)
-	local pos = Human and Human.RootPart and Human.RootPart.CFrame
-	local pos1 = Camera.CFrame
-	
-	respawn(Plr)
-	
-	task.spawn(function()
-		Plr.CharacterAdded:Wait():WaitForChild("Humanoid").RootPart.CFrame, Camera.CFrame = pos, wait() and pos1
-		playerVariables.refreshCmd = false
+local function GetClosestPlayer()
+	if not aimbotVariables.Locked then
+		RequiredDistance = 120
+
+		for _, v in next, Players:GetPlayers() do
+			if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(aimbotVariables.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
+				if aimbotVariables.Team_Check and v.TeamColor == LocalPlayer.TeamColor then continue end
+				if v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+				if aimbotVariables.Wall_Check and #(Camera:GetPartsObscuringTarget({v.Character[aimbotVariables.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+
+				local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[aimbotVariables.LockPart].Position); Vector = ConvertVector(Vector)
+				local Distance = (UserInputService:GetMouseLocation() - Vector).Magnitude
+
+				if Distance < RequiredDistance and OnScreen then
+					RequiredDistance = Distance
+					aimbotVariables.Locked = v
+				end
+			end
+		end
+	elseif (UserInputService:GetMouseLocation() - ConvertVector(Camera:WorldToViewportPoint(aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position))).Magnitude > RequiredDistance then
+		CancelLock()
+	end
+end
+
+local function Load()
+	OriginalSensitivity = UserInputService.MouseDeltaSensitivity
+
+	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
+		if aimbotVariables.Aimbot then
+			aimbotVariables.FOVCircle.Radius = 120
+			aimbotVariables.FOVCircle.Thickness = 1
+			aimbotVariables.FOVCircle.Filled = false
+			aimbotVariables.FOVCircle.NumSides = 60
+			aimbotVariables.FOVCircle.Color = aimbotVariables.Color
+			aimbotVariables.FOVCircle.Transparency = .5
+			aimbotVariables.FOVCircle.Visible = aimbotVariables.Aimbot
+			aimbotVariables.FOVCircle.Position = Vector2new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+		else
+			aimbotVariables.FOVCircle.Visible = false
+		end
+
+		if Running and aimbotVariables.Aimbot then
+			GetClosestPlayer()
+
+			if aimbotVariables.Locked then
+				if aimbotVariables.Third_Person then
+					local Vector = Camera:WorldToViewportPoint(aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position)
+					mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * 1, (Vector.Y - UserInputService:GetMouseLocation().Y) * 1)
+				else
+					Camera.CFrame = CFramenew(Camera.CFrame.Position, aimbotVariables.Locked.Character[aimbotVariables.LockPart].Position)
+					UserInputService.MouseDeltaSensitivity = 0
+				end
+
+				aimbotVariables.FOVCircle.Color = aimbotVariables.LockedColor
+			end
+		end
+	end)
+
+	ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(Input)
+		if not Typing then
+			pcall(function()
+				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Enum.KeyCode[#aimbotVariables.TriggerKey == 1 and stringupper(aimbotVariables.TriggerKey) or aimbotVariables.TriggerKey] or Input.UserInputType == Enum.UserInputType[aimbotVariables.TriggerKey] then
+					Running = true
+				end
+			end)
+		end
+	end)
+
+	ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
+		if not Typing then
+			pcall(function()
+				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Enum.KeyCode[#aimbotVariables.TriggerKey == 1 and stringupper(aimbotVariables.TriggerKey) or aimbotVariables.TriggerKey] or Input.UserInputType == Enum.UserInputType[aimbotVariables.TriggerKey] then
+					Running = false; CancelLock()
+				end
+			end)
+		end
 	end)
 end
+
+--// Show/Hide UI \\--
+
+UserInputService.InputBegan:Connect(function(input, GP)
+	if input.KeyCode == Enum.KeyCode.RightShift then
+		local UI = COREGUI:FindFirstChild("Command UI (RShift to show/hide)")
+		if UI then
+			UI.Enabled = not UI.Enabled
+		end
+	end
+end)
 
 --// UI \\--
 
@@ -1126,7 +1236,7 @@ teleTab_Loop_Teleport = teleTab.Toggle({
 	Callback = function(Value)
 		teleportVariables.loop_Tele = Value
 		if Value then
-			Tele(teleportVariables.target)
+			Tele(teleportVariables.tele_Target)
 		end
 	end,
 	Enabled = false
@@ -1135,7 +1245,7 @@ teleTab_Loop_Teleport = teleTab.Toggle({
 teleTab_Teleport_To_Dropdown = teleTab.Dropdown({
 	Text = "Teleport To",
 	Callback = function(Value)
-		teleportVariables.target = Value
+		teleportVariables.tele_Target = Value
 		Tele(Value)
 	end,
 	Options = temp_List
@@ -1638,111 +1748,10 @@ serverTab_Discord_Link = serverTab.Button({
 	}
 })
 
---// Player List Update \\--
-
-function GetList()
-	local Plr_List = getPlayers()
-	teleTab_Teleport_To_Dropdown:SetOptions(Plr_List)
-	teleTab_View_Dropdown:SetOptions(Plr_List)
-	teleTab_Headsit_Dropdown:SetOptions(Plr_List)
-	flyTab_Bang_Dropdown:SetOptions(Plr_List)
-	flyTab_Facesit_Dropdown:SetOptions(Plr_List)
-end
-
-function onDied()
-	task.spawn(function()
-		if pcall(function() LocalPlayer.Character:FindFirstChildOfClass('Humanoid') end) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
-			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
-				if getRoot(LocalPlayer.Character) then
-					playerVariables.lastDeath = getRoot(LocalPlayer.Character).CFrame
-				end
-			end)
-			
-			if getgenv().settings.auto_Shrink then
-				spawn(shrink)
-			end
-		else
-			wait(2)
-			onDied()
-		end
-	end)
-end
-
-Players.PlayerAdded:Connect(function(Plr)
-	GetList()
-	Esp_Activation(Plr)
-end)
-
-Players.PlayerRemoving:Connect(function(Plr)
-	GetList()
-	
-	for i,v in pairs(COREGUI:GetChildren()) do
-		if v.Name == Plr.Name..'_Data' or v.Name == Plr.Name..'_Body' or v.Name == Plr.Name.."_Highlight" then
-			v:Destroy()
-		end
-	end
-	
-	if playerVariables.viewing and Plr == playerVariables.viewing then
-		Camera.CameraSubject = LocalPlayer.Character
-		playerVariables.viewing = nil
-		if viewDied then
-			viewDied:Disconnect()
-			viewChanged:Disconnect()
-		end
-	end
-end)
+--// Run Everything \\--
 
 GetList()
-
---// Click Teleport \\--
-
-Mouse.Button1Down:Connect(function()
-	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and getgenv().settings.click_Tele then
-		local root = LocalPlayer.Character.HumanoidRootPart
-		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
-		local offset = pos-root.Position
-		GetUp()
-		root.CFrame = root.CFrame + offset
-	end
-	
-	if UserInputService:IsKeyDown(Enum.KeyCode.X) and getgenv().settings.click_Delete and Mouse.Target then
-		Mouse.Target:Destroy()
-	end
-end)
-
---// Respawn \\--
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-	NOFLY()
-	repeat wait() until getRoot(char)
-	onDied()
-end)
-
 onDied()
-
---// Typing Check \\--
-
-ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
-	Typing = true
-end)
-
-ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
-	Typing = false
-end)
-
---// Hide/Show UI \\--
-
-UserInputService.InputBegan:Connect(function(input, GP)
-	if input.KeyCode == Enum.KeyCode.RightShift then
-		local UI = COREGUI:FindFirstChild("Command UI (RShift to show/hide)")
-		if UI then
-			UI.Enabled = not UI.Enabled
-		end
-	end
-end)
-
---// Load Aimbot/ESP \\--
-
 Load()
 
 for _, v in pairs(Players:GetPlayers()) do
