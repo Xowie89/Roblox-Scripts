@@ -138,6 +138,16 @@ else
 	end)
 end
 
+--// Typing Check \\--
+
+ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
+	Typing = true
+end)
+
+ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
+	Typing = false
+end)
+
 --// Settings Save/Load \\--
 
 getgenv().settings = {}
@@ -165,86 +175,6 @@ local function saveSettings()
 	if settingsLock == false then
 		writefile('CommandUISettings.txt', HttpService:JSONEncode(getgenv().settings))
 	end
-end
-
---// Random Useful Functions \\--
-
-function GetUp()
-	local Human = LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
-	if Human and Human.SeatPart then
-		Human.Sit = false
-		wait(.1)
-	end
-end
-
-function getRoot(char)
-	local rootPart = char:FindFirstChild('HumanoidRootPart') or char:FindFirstChild('Torso') or char:FindFirstChild('UpperTorso')
-	return rootPart
-end
-
-function r15(Plr)
-	if Plr.Character:FindFirstChildOfClass('Humanoid').RigType == Enum.HumanoidRigType.R15 then
-		return true
-	end
-end
-
-function getTorso(x)
-	x = x or LocalPlayer.Character
-	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
-end
-
---// Server Hop \\--
-
-local function ServerHop()
-	if serverVariables.minimumPlayers > serverVariables.maximumPlayers then return end
-	local foundserver = false
-	local searched = false
-	local pid = game.PlaceId
-	local Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
-	LocalPlayer:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
-	task.spawn(function()
-		repeat
-			if searched then
-				if not Servers.nextPageCursor then
-					warn("All servers searched")
-				end
-				Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
-			end
-			
-			for i,v in pairs(Servers.data) do
-				if v.playing <= serverVariables.maximumPlayers and v.playing >= serverVariables.minimumPlayers then
-					foundserver = true
-					TeleportService:TeleportToPlaceInstance(pid, v.id)
-				end
-			end
-			
-			searched = true
-			wait(1)
-		until foundserver
-	end)
-end
-
---// Teleport \\--
-
-function Tele(Plr)
-	task.spawn(function()
-		repeat
-			local tPlr = getPlayerFromString(Plr)
-			if tPlr then
-				local myChar = LocalPlayer.Character
-				local tChar = tPlr.Character
-				if myChar and tChar then
-					local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-					local tRoot = tChar:FindFirstChild("HumanoidRootPart")
-					if myRoot and tRoot then
-						GetUp()
-						myRoot.CFrame = tRoot.CFrame
-					end
-				end
-			end
-			wait()
-		until not teleportVariables.loop_Tele or teleportVariables.tele_Target ~= Plr or not Plr or not tPlr or not teleportVariables.tele_Target
-	end)
 end
 
 --// Player Dropdown Lists \\--
@@ -293,6 +223,71 @@ function GetList()
 	flyTab_Facesit_Dropdown:SetOptions(Plr_List)
 end
 
+--// Random Useful Functions \\--
+
+function GetUp()
+	local Human = LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+	if Human and Human.SeatPart then
+		Human.Sit = false
+		wait(.1)
+	end
+end
+
+function getRoot(char)
+	local rootPart = char:FindFirstChild('HumanoidRootPart') or char:FindFirstChild('Torso') or char:FindFirstChild('UpperTorso')
+	return rootPart
+end
+
+function r15(Plr)
+	if Plr.Character:FindFirstChildOfClass('Humanoid').RigType == Enum.HumanoidRigType.R15 then
+		return true
+	end
+end
+
+function getTorso(x)
+	x = x or LocalPlayer.Character
+	return x:FindFirstChild("Torso") or x:FindFirstChild("UpperTorso") or x:FindFirstChild("LowerTorso") or x:FindFirstChild("HumanoidRootPart")
+end
+
+--// Teleport \\--
+
+function Tele(Plr)
+	task.spawn(function()
+		repeat
+			local tPlr = getPlayerFromString(Plr)
+			if tPlr then
+				local myChar = LocalPlayer.Character
+				local tChar = tPlr.Character
+				if myChar and tChar then
+					local myRoot = getRoot(myChar)
+					local tRoot = getRoot(tChar)
+					if myRoot and tRoot then
+						GetUp()
+						myRoot.CFrame = tRoot.CFrame
+					end
+				end
+			end
+			wait()
+		until not teleportVariables.loop_Tele or teleportVariables.tele_Target ~= Plr or not Plr or not tPlr or not teleportVariables.tele_Target
+	end)
+end
+
+--// Click Teleport & Click Delete \\--
+
+Mouse.Button1Down:Connect(function()
+	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and getgenv().settings.click_Tele then
+		local root = getRoot(LocalPlayer.Character)
+		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
+		local offset = pos-root.Position
+		GetUp()
+		root.CFrame = root.CFrame + offset
+	end
+	
+	if UserInputService:IsKeyDown(Enum.KeyCode.X) and getgenv().settings.click_Delete and Mouse.Target then
+		Mouse.Target:Destroy()
+	end
+end)
+
 --// Stop Viewing \\--
 
 function StopFreecam()
@@ -340,88 +335,36 @@ function refresh(Plr)
 	end)
 end
 
---// Character Died \\--
+--// Server Hop \\--
 
-function onDied()
+local function ServerHop()
+	if serverVariables.minimumPlayers > serverVariables.maximumPlayers then return end
+	local foundserver = false
+	local searched = false
+	local pid = game.PlaceId
+	local Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100"))
+	LocalPlayer:Kick("\nDo not leave.\nSearching for a server with a minimum of "..serverVariables.minimumPlayers.." and a maximum of "..serverVariables.maximumPlayers.." players.")
 	task.spawn(function()
-		if pcall(function() LocalPlayer.Character:FindFirstChildOfClass('Humanoid') end) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
-			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
-				if getRoot(LocalPlayer.Character) then
-					playerVariables.lastDeath = getRoot(LocalPlayer.Character).CFrame
+		repeat
+			if searched then
+				if not Servers.nextPageCursor then
+					warn("All servers searched")
 				end
-			end)
-			
-			if getgenv().settings.auto_Shrink then
-				spawn(shrink)
+				Servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..pid.."/servers/Public?sortOrder=Asc&limit=100&cursor="..Servers.nextPageCursor))
 			end
-		else
-			wait(2)
-			onDied()
-		end
+			
+			for i,v in pairs(Servers.data) do
+				if v.playing <= serverVariables.maximumPlayers and v.playing >= serverVariables.minimumPlayers then
+					foundserver = true
+					TeleportService:TeleportToPlaceInstance(pid, v.id)
+				end
+			end
+			
+			searched = true
+			wait(1)
+		until foundserver
 	end)
 end
-
---// Respawn \\--
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-	NOFLY()
-	repeat wait() until getRoot(char)
-	onDied()
-end)
-
---// PlayerAdded \\--
-
-Players.PlayerAdded:Connect(function(Plr)
-	GetList()
-	Esp_Activation(Plr)
-end)
-
---// PlayerRemoving \\--
-
-Players.PlayerRemoving:Connect(function(Plr)
-	GetList()
-	
-	for i,v in pairs(COREGUI:GetChildren()) do
-		if v.Name == Plr.Name..'_Data' or v.Name == Plr.Name..'_Body' or v.Name == Plr.Name.."_Highlight" then
-			v:Destroy()
-		end
-	end
-	
-	if playerVariables.viewing and Plr == playerVariables.viewing then
-		Camera.CameraSubject = LocalPlayer.Character
-		playerVariables.viewing = nil
-		if viewDied then
-			viewDied:Disconnect()
-			viewChanged:Disconnect()
-		end
-	end
-end)
-
---// Click Teleport \\--
-
-Mouse.Button1Down:Connect(function()
-	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and getgenv().settings.click_Tele then
-		local root = LocalPlayer.Character.HumanoidRootPart
-		local pos = Mouse.Hit.Position + Vector3.new(0, 2.5, 0)
-		local offset = pos-root.Position
-		GetUp()
-		root.CFrame = root.CFrame + offset
-	end
-	
-	if UserInputService:IsKeyDown(Enum.KeyCode.X) and getgenv().settings.click_Delete and Mouse.Target then
-		Mouse.Target:Destroy()
-	end
-end)
-
---// Typing Check \\--
-
-ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
-	Typing = true
-end)
-
-ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
-	Typing = false
-end)
 
 --// Bang \\--
 
@@ -1747,6 +1690,63 @@ serverTab_Discord_Link = serverTab.Button({
 		end
 	}
 })
+
+--// Character Died \\--
+
+function onDied()
+	task.spawn(function()
+		if pcall(function() LocalPlayer.Character:FindFirstChildOfClass('Humanoid') end) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Died:Connect(function()
+				if getRoot(LocalPlayer.Character) then
+					playerVariables.lastDeath = getRoot(LocalPlayer.Character).CFrame
+				end
+			end)
+			
+			if getgenv().settings.auto_Shrink then
+				spawn(shrink)
+			end
+		else
+			wait(2)
+			onDied()
+		end
+	end)
+end
+
+--// Respawn \\--
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	NOFLY()
+	repeat wait() until getRoot(char)
+	onDied()
+end)
+
+--// PlayerAdded \\--
+
+Players.PlayerAdded:Connect(function(Plr)
+	GetList()
+	Esp_Activation(Plr)
+end)
+
+--// PlayerRemoving \\--
+
+Players.PlayerRemoving:Connect(function(Plr)
+	GetList()
+	
+	for i,v in pairs(COREGUI:GetChildren()) do
+		if v.Name == Plr.Name..'_Data' or v.Name == Plr.Name..'_Body' or v.Name == Plr.Name.."_Highlight" then
+			v:Destroy()
+		end
+	end
+	
+	if playerVariables.viewing and Plr == playerVariables.viewing then
+		Camera.CameraSubject = LocalPlayer.Character
+		playerVariables.viewing = nil
+		if viewDied then
+			viewDied:Disconnect()
+			viewChanged:Disconnect()
+		end
+	end
+end)
 
 --// Run Everything \\--
 
