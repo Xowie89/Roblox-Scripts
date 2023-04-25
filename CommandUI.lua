@@ -161,7 +161,6 @@ local settingsLock = true
 
 local function saveSettings()
 	if settingsLock == false then
-		print('Settings saved.')
 		writefile('CommandUISettings.txt', HttpService:JSONEncode(getgenv().settings))
 	end
 end
@@ -423,7 +422,7 @@ function getPlayers()
 	local Plrs = {}
 	for _,v in pairs(Players:GetPlayers()) do
 		if v ~= LocalPlayer then
-			local Field = stringupper(Title_3_Object_6.GetText())
+			local Field = stringupper(telespyPlayerSearch.GetText())
 			if Field ~= "" then
 				if string.match(stringupper(v.Name), Field) or string.match(stringupper(v.DisplayName), Field) then
 					if v.Name ~= v.DisplayName then
@@ -896,7 +895,7 @@ end
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xowie89/MaterialLua/master/Module.lua"))()
 
 MainGui = Material.Load({
-	Title = "Command UI",
+	Title = "Command UI (RShift to show/hide)",
 	Style = 1,
 	SizeX = 400,
 	SizeY = 500,
@@ -942,6 +941,15 @@ Title_1_Object_1 = Title_1.Toggle({
 })
 
 Title_1_Object_2 = Title_1.Toggle({
+	Text = "Click Delete (Hold X)",
+	Callback = function(Value)
+		getgenv().settings.click_Delete = Value
+		saveSettings()
+	end,
+	Enabled = getgenv().settings.click_Delete
+})
+
+Title_1_Object_3 = Title_1.Toggle({
 	Text = "Noclip",
 	Callback = function(Value)
 		if Value then
@@ -965,7 +973,7 @@ Title_1_Object_2 = Title_1.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_3 = Title_1.Button({
+Title_1_Object_4 = Title_1.Button({
 	Text = "Lay",
 	Callback = function(Value)
 		local Human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
@@ -990,7 +998,7 @@ Title_1_Object_3 = Title_1.Button({
 	}
 })
 
-Title_1_Object_4 = Title_1.Button({
+Title_1_Object_5 = Title_1.Button({
 	Text = "Respawn",
 	Callback = function(Value)
 		respawn(LocalPlayer)
@@ -1004,7 +1012,7 @@ Title_1_Object_4 = Title_1.Button({
 	}
 })
 
-Title_1_Object_5 = Title_1.Button({
+Title_1_Object_6 = Title_1.Button({
 	Text = "Refresh",
 	Callback = function(Value)
 		refresh(LocalPlayer)
@@ -1018,7 +1026,7 @@ Title_1_Object_5 = Title_1.Button({
 	}
 })
 
-Title_1_Object_6 = Title_1.Slider({
+Title_1_Object_7 = Title_1.Slider({
 	Text = "Spin Speed",
 	Callback = function(Value)
 		playerVariables.spinSpeed = Value
@@ -1033,7 +1041,7 @@ Title_1_Object_6 = Title_1.Slider({
 	Def = 20
 })
 
-Title_1_Object_7 = Title_1.Toggle({
+Title_1_Object_8 = Title_1.Toggle({
 	Text = "Spin",
 	Callback = function(Value)
 		if Value then
@@ -1053,7 +1061,7 @@ Title_1_Object_7 = Title_1.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_8 = Title_1.Button({
+Title_1_Object_9 = Title_1.Button({
 	Text = "Split",
 	Callback = function(Value)
 		if r15(LocalPlayer) then
@@ -1073,6 +1081,14 @@ Title_1_Object_8 = Title_1.Button({
 })
 
 --// Teleport/Spy \\--
+
+telespyPlayerSearch = Title_2.TextField({
+	Text = "Player Search",
+	Callback = function(Value)
+		flypervPlayerSearch:SetText(Value)
+		GetList()
+	end
+})
 
 Title_2_Object_1 = Title_2.Toggle({
 	Text = "Click Teleport (Hold L Ctrl/Shift)",
@@ -1114,7 +1130,7 @@ Title_2_Object_3 = Title_2.Toggle({
 	Enabled = false
 })
 
-Title_2_Object_4 = Title_2.Dropdown({
+teleDropdown = Title_2.Dropdown({
 	Text = "Teleport To",
 	Callback = function(Value)
 		teleportVariables.target = Value
@@ -1148,7 +1164,7 @@ Title_2_Object_5 = Title_2.Button({
 	}
 })
 
-Title_2_Object_6 = Title_2.Dropdown({
+viewDropdown = Title_2.Dropdown({
 	Text = "View",
 	Callback = function(Value)
 		StopFreecam()
@@ -1179,7 +1195,7 @@ Title_2_Object_6 = Title_2.Dropdown({
 	Options = temp_List
 })
 
-Title_2_Object_7 = Title_2.Dropdown({
+headsitDropdown = Title_2.Dropdown({
 	Text = "Headsit",
 	Callback = function(Value)
 		local tPlr = getPlayerFromString(Value)
@@ -1258,28 +1274,15 @@ Title_3_Object_4 = Title_3.Button({
 	}
 })
 
-Title_3_Object_5 = Title_3.Toggle({
-	Text = "Click Delete (Hold X)",
-	Callback = function(Value)
-		getgenv().settings.click_Delete = Value
-		saveSettings()
-	end,
-	Enabled = getgenv().settings.click_Delete
-})
+--// Fly/Perv \\--
 
-Title_3_Object_6 = Title_3.TextField({
+flypervPlayerSearch = Title_4.TextField({
 	Text = "Player Search",
 	Callback = function(Value)
+		telespyPlayerSearch:SetText(Value)
 		GetList()
-	end,
-	Menu = {
-		PS = function(self)
-			self.SetText("Player Search")
-		end
-	}
+	end
 })
-
---// Fly/Perv \\--
 
 Title_4_Object_1 = Title_4.Slider({
 	Text = "Fly Speed",
@@ -1342,7 +1345,7 @@ Title_4_Object_5 = Title_4.Button({
 	}
 })
 
-Title_4_Object_6 = Title_4.Dropdown({
+bangDropdown = Title_4.Dropdown({
 	Text = "Bang",
 	Callback = function(Value)
 		Bang(Value)
@@ -1350,7 +1353,7 @@ Title_4_Object_6 = Title_4.Dropdown({
 	Options = temp_List
 })
 
-Title_4_Object_7 = Title_4.Dropdown({
+facesitDropdown = Title_4.Dropdown({
 	Text = "Facesit",
 	Callback = function(Value)
 		local tPlr = getPlayerFromString(Value)
@@ -1615,13 +1618,13 @@ Title_6_Object_11 = Title_6.Dropdown({
 
 --// Player List Update \\--
 
-function GetList()
-	local Plr_List = getPlayers()
-	Title_2_Object_4:SetOptions(Plr_List)
-	Title_2_Object_6:SetOptions(Plr_List)
-	Title_2_Object_7:SetOptions(Plr_List)
-	Title_4_Object_6:SetOptions(Plr_List)
-	Title_4_Object_7:SetOptions(Plr_List)
+function GetList(obj)
+	local Plr_List = getPlayers(obj)
+	teleDropdown:SetOptions(Plr_List)
+	viewDropdown:SetOptions(Plr_List)
+	headsitDropdown:SetOptions(Plr_List)
+	bangDropdown:SetOptions(Plr_List)
+	facesitDropdown:SetOptions(Plr_List)
 end
 
 function onDied()
@@ -1703,6 +1706,17 @@ end)
 
 ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
 	Typing = false
+end)
+
+--// Hide/Show UI \\--
+
+UserInputService.InputBegan:Connect(function(input, GP)
+	if input.KeyCode == Enum.KeyCode.RightShift then
+		local UI = COREGUI:FindFirstChild("Command UI (RShift to show/hide)")
+		if UI then
+			UI.Enabled = not UI.Enabled
+		end
+	end
 end)
 
 --// Load Aimbot/ESP \\--
