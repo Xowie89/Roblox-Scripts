@@ -424,7 +424,7 @@ function getPlayers()
 	local Plrs = {}
 	for _,v in pairs(Players:GetPlayers()) do
 		if v ~= LocalPlayer then
-			local Field = stringupper(telespyPlayerSearch.GetText())
+			local Field = stringupper(teleTab_Player_Search.GetText())
 			if Field ~= "" then
 				if string.match(stringupper(v.Name), Field) or string.match(stringupper(v.DisplayName), Field) then
 					if v.Name ~= v.DisplayName then
@@ -930,7 +930,7 @@ serverTab = MainGui.New({
 
 --// Player \\--
 
-Title_1_Object_1 = playerTab.Toggle({
+playerTab_Auto_Shrink = playerTab.Toggle({
 	Text = "Auto Shrink (R15 Only)",
 	Callback = function(Value)
 		getgenv().settings.auto_Shrink = Value
@@ -942,7 +942,7 @@ Title_1_Object_1 = playerTab.Toggle({
 	Enabled = getgenv().settings.auto_Shrink
 })
 
-Title_1_Object_2 = playerTab.Toggle({
+playerTab_Click_Delete = playerTab.Toggle({
 	Text = "Click Delete (Hold X)",
 	Callback = function(Value)
 		getgenv().settings.click_Delete = Value
@@ -951,7 +951,7 @@ Title_1_Object_2 = playerTab.Toggle({
 	Enabled = getgenv().settings.click_Delete
 })
 
-Title_1_Object_3 = playerTab.Toggle({
+playerTab_Noclip = playerTab.Toggle({
 	Text = "Noclip",
 	Callback = function(Value)
 		if Value then
@@ -975,7 +975,7 @@ Title_1_Object_3 = playerTab.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_4 = playerTab.Toggle({
+playerTab_Spin = playerTab.Toggle({
 	Text = "Spin",
 	Callback = function(Value)
 		if Value then
@@ -995,7 +995,7 @@ Title_1_Object_4 = playerTab.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_5 = playerTab.Slider({
+playerTab_Spin_Speed = playerTab.Slider({
 	Text = "Spin Speed",
 	Callback = function(Value)
 		playerVariables.spinSpeed = Value
@@ -1010,7 +1010,7 @@ Title_1_Object_5 = playerTab.Slider({
 	Def = 20
 })
 
-Title_1_Object_6 = playerTab.Button({
+playerTab_Lay = playerTab.Button({
 	Text = "Lay",
 	Callback = function(Value)
 		local Human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
@@ -1035,7 +1035,7 @@ Title_1_Object_6 = playerTab.Button({
 	}
 })
 
-Title_1_Object_7 = playerTab.Button({
+playerTab_Split = playerTab.Button({
 	Text = "Split",
 	Callback = function(Value)
 		if r15(LocalPlayer) then
@@ -1054,7 +1054,7 @@ Title_1_Object_7 = playerTab.Button({
 	}
 })
 
-Title_1_Object_8 = playerTab.Button({
+playerTab_Respawn = playerTab.Button({
 	Text = "Respawn",
 	Callback = function(Value)
 		respawn(LocalPlayer)
@@ -1068,7 +1068,7 @@ Title_1_Object_8 = playerTab.Button({
 	}
 })
 
-Title_1_Object_9 = playerTab.Button({
+playerTab_Refresh = playerTab.Button({
 	Text = "Refresh",
 	Callback = function(Value)
 		refresh(LocalPlayer)
@@ -1084,15 +1084,15 @@ Title_1_Object_9 = playerTab.Button({
 
 --// Teleport/Spy \\--
 
-telespyPlayerSearch = teleTab.TextField({
+teleTab_Player_Search = teleTab.TextField({
 	Text = "Player Search",
 	Callback = function(Value)
-		flypervPlayerSearch:SetText(Value)
+		flyTab_Player_Search:SetText(Value)
 		GetList()
 	end
 })
 
-Title_2_Object_1 = teleTab.Toggle({
+teleTab_Click_Teleport = teleTab.Toggle({
 	Text = "Click Teleport (Hold L Ctrl/Shift)",
 	Callback = function(Value)
 		getgenv().settings.click_Tele = Value
@@ -1101,7 +1101,7 @@ Title_2_Object_1 = teleTab.Toggle({
 	Enabled = getgenv().settings.click_Tele
 })
 
-Title_2_Object_2 = teleTab.Button({
+teleTab_Flashback = teleTab.Button({
 	Text = "Flashback",
 	Callback = function(Value)
 		if playerVariables.lastDeath then
@@ -1121,8 +1121,8 @@ Title_2_Object_2 = teleTab.Button({
 	}
 })
 
-Title_2_Object_3 = teleTab.Toggle({
-	Text = "Loop Tele",
+teleTab_Loop_Teleport = teleTab.Toggle({
+	Text = "Loop Teleport",
 	Callback = function(Value)
 		teleportVariables.loop_Tele = Value
 		if Value then
@@ -1132,7 +1132,7 @@ Title_2_Object_3 = teleTab.Toggle({
 	Enabled = false
 })
 
-teleDropdown = teleTab.Dropdown({
+teleTab_Teleport_To_Dropdown = teleTab.Dropdown({
 	Text = "Teleport To",
 	Callback = function(Value)
 		teleportVariables.target = Value
@@ -1141,7 +1141,7 @@ teleDropdown = teleTab.Dropdown({
 	Options = temp_List
 })
 
-Title_2_Object_5 = teleTab.Button({
+teleTab_Unview = teleTab.Button({
 	Text = "Unview",
 	Callback = function(Value)
 		StopFreecam()
@@ -1166,7 +1166,7 @@ Title_2_Object_5 = teleTab.Button({
 	}
 })
 
-viewDropdown = teleTab.Dropdown({
+teleTab_View_Dropdown = teleTab.Dropdown({
 	Text = "View",
 	Callback = function(Value)
 		StopFreecam()
@@ -1197,7 +1197,7 @@ viewDropdown = teleTab.Dropdown({
 	Options = temp_List
 })
 
-headsitDropdown = teleTab.Dropdown({
+teleTab_Headsit_Dropdown = teleTab.Dropdown({
 	Text = "Headsit",
 	Callback = function(Value)
 		local tPlr = getPlayerFromString(Value)
@@ -1222,15 +1222,15 @@ headsitDropdown = teleTab.Dropdown({
 
 --// Fly/Perv \\--
 
-flypervPlayerSearch = flyTab.TextField({
+flyTab_Player_Search = flyTab.TextField({
 	Text = "Player Search",
 	Callback = function(Value)
-		telespyPlayerSearch:SetText(Value)
+		teleTab_Player_Search:SetText(Value)
 		GetList()
 	end
 })
 
-Title_4_Object_1 = flyTab.Toggle({
+flyTab_Swim = flyTab.Toggle({
 	Text = "Swim",
 	Callback = function(Value)
 		if Value and LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid") then
@@ -1282,7 +1282,7 @@ Title_4_Object_1 = flyTab.Toggle({
 	Enabled = false
 })
 
-Title_4_Object_2 = flyTab.Toggle({
+flyTab_Fly = flyTab.Toggle({
 	Text = "Fly",
 	Callback = function(Value)
 		if Value then
@@ -1296,7 +1296,7 @@ Title_4_Object_2 = flyTab.Toggle({
 	Enabled = false
 })
 
-Title_4_Object_3 = flyTab.Toggle({
+flyTab_Vehicle_Fly = flyTab.Toggle({
 	Text = "Vehicle Fly",
 	Callback = function(Value)
 		if Value then
@@ -1310,7 +1310,7 @@ Title_4_Object_3 = flyTab.Toggle({
 	Enabled = false
 })
 
-Title_4_Object_4 = flyTab.Toggle({
+flyTab_QE_Fly = flyTab.Toggle({
 	Text = "Q/E Fly",
 	Callback = function(Value)
 		flyVariables.QEfly = Value
@@ -1318,7 +1318,7 @@ Title_4_Object_4 = flyTab.Toggle({
 	Enabled = flyVariables.QEfly
 })
 
-Title_4_Object_5 = flyTab.Slider({
+flyTab_Fly_Speed = flyTab.Slider({
 	Text = "Fly Speed",
 	Callback = function(Value)
 		flyVariables.iyflyspeed = Value
@@ -1329,7 +1329,7 @@ Title_4_Object_5 = flyTab.Slider({
 	Def = 1
 })
 
-Title_4_Object_6 = flyTab.Button({
+flyTab_Unbang = flyTab.Button({
 	Text = "Unbang",
 	Callback = function(Value)
 		Unbang()
@@ -1343,7 +1343,7 @@ Title_4_Object_6 = flyTab.Button({
 	}
 })
 
-bangDropdown = flyTab.Dropdown({
+flyTab_Bang_Dropdown = flyTab.Dropdown({
 	Text = "Bang",
 	Callback = function(Value)
 		Bang(Value)
@@ -1351,7 +1351,7 @@ bangDropdown = flyTab.Dropdown({
 	Options = temp_List
 })
 
-facesitDropdown = flyTab.Dropdown({
+flyTab_Facesit_Dropdown = flyTab.Dropdown({
 	Text = "Facesit",
 	Callback = function(Value)
 		local tPlr = getPlayerFromString(Value)
@@ -1376,7 +1376,7 @@ facesitDropdown = flyTab.Dropdown({
 
 --// ESP \\--
 
-Title_6_Object_1 = espTab.Toggle({
+espTab_Body_ESP = espTab.Toggle({
 	Text = "Body ESP",
 	Callback = function(Value)
 		espVariables.Body_ESP = Value
@@ -1384,7 +1384,7 @@ Title_6_Object_1 = espTab.Toggle({
 	Enabled = espVariables.Body_ESP
 })
 
-Title_6_Object_2 = espTab.Toggle({
+espTab_Highlight_ESP = espTab.Toggle({
 	Text = "Highlight ESP",
 	Callback = function(Value)
 		espVariables.Highlight_ESP = Value
@@ -1392,7 +1392,7 @@ Title_6_Object_2 = espTab.Toggle({
 	Enabled = espVariables.Highlight_ESP
 })
 
-Title_6_Object_3 = espTab.Toggle({
+espTab_Box_ESP = espTab.Toggle({
 	Text = "Box ESP",
 	Callback = function(Value)
 		espVariables.Box_ESP = Value
@@ -1400,7 +1400,7 @@ Title_6_Object_3 = espTab.Toggle({
 	Enabled = espVariables.Box_ESP
 })
 
-Title_6_Object_4 = espTab.Toggle({
+espTab_Tracer_ESP = espTab.Toggle({
 	Text = "Tracer ESP",
 	Callback = function(Value)
 		espVariables.Tracer_ESP = Value
@@ -1408,7 +1408,7 @@ Title_6_Object_4 = espTab.Toggle({
 	Enabled = espVariables.Tracer_ESP
 })
 
-Title_6_Object_5 = espTab.Toggle({
+espTab_Show_Info = espTab.Toggle({
 	Text = "Show Info",
 	Callback = function(Value)
 		espVariables.Show_Info = Value
@@ -1416,7 +1416,7 @@ Title_6_Object_5 = espTab.Toggle({
 	Enabled = espVariables.Show_Info
 })
 
-Title_6_Object_6 = espTab.Toggle({
+espTab_Hide_Team = espTab.Toggle({
 	Text = "Hide Team",
 	Callback = function(Value)
 		espVariables.Hide_Team = Value
@@ -1424,7 +1424,7 @@ Title_6_Object_6 = espTab.Toggle({
 	Enabled = espVariables.Hide_Team
 })
 
-Title_6_Object_7 = espTab.Toggle({
+espTab_Aimbot = espTab.Toggle({
 	Text = "Aimbot",
 	Callback = function(Value)
 		aimbotVariables.Aimbot = Value
@@ -1432,7 +1432,7 @@ Title_6_Object_7 = espTab.Toggle({
 	Enabled = aimbotVariables.Aimbot
 })
 
-Title_6_Object_8 = espTab.Toggle({
+espTab_Team_Check = espTab.Toggle({
 	Text = "Team Check",
 	Callback = function(Value)
 		aimbotVariables.Team_Check = Value
@@ -1440,7 +1440,7 @@ Title_6_Object_8 = espTab.Toggle({
 	Enabled = aimbotVariables.Team_Check
 })
 
-Title_6_Object_9 = espTab.Toggle({
+espTab_Wall_Check = espTab.Toggle({
 	Text = "Wall Check",
 	Callback = function(Value)
 		aimbotVariables.Wall_Check = Value
@@ -1448,7 +1448,7 @@ Title_6_Object_9 = espTab.Toggle({
 	Enabled = aimbotVariables.Wall_Check
 })
 
-Title_6_Object_10 = espTab.Toggle({
+espTab_Third_Person = espTab.Toggle({
 	Text = "Third Person",
 	Callback = function(Value)
 		aimbotVariables.Third_Person = Value
@@ -1456,7 +1456,7 @@ Title_6_Object_10 = espTab.Toggle({
 	Enabled = aimbotVariables.Third_Person
 })
 
-Title_6_Object_11 = espTab.Dropdown({
+espTab_Target = espTab.Dropdown({
 	Text = "Target",
 	Default = aimbotVariables.LockPart,
 	Callback = function(Value)
@@ -1467,7 +1467,7 @@ Title_6_Object_11 = espTab.Dropdown({
 
 --// Lighting \\--
 
-Title_5_Object_1 = lightTab.Button({
+lightTab_Fullbright = lightTab.Button({
 	Text = "Fullbright",
 	Callback = function(Value)
 		Lighting.Brightness = 2
@@ -1485,7 +1485,7 @@ Title_5_Object_1 = lightTab.Button({
 	}
 })
 
-Title_5_Object_2 = lightTab.Toggle({
+lightTab_Fullbright_Loop = lightTab.Toggle({
 	Text = "Fullbright Loop",
 	Callback = function(Value)
 		if Value then
@@ -1505,7 +1505,7 @@ Title_5_Object_2 = lightTab.Toggle({
 	Enabled = false
 })
 
-Title_5_Object_3 = lightTab.Slider({
+lightTab_Set_Time = lightTab.Slider({
 	Text = "Set Time",
 	Callback = function(Value)
 		Lighting.ClockTime = Value
@@ -1515,7 +1515,7 @@ Title_5_Object_3 = lightTab.Slider({
 	Def = Lighting.ClockTime
 })
 
-Title_5_Object_4 = lightTab.Toggle({
+lightTab_Global_Shadows = lightTab.Toggle({
 	Text = "Global Shadows",
 	Callback = function(Value)
 		Lighting.GlobalShadows = Value
@@ -1523,7 +1523,7 @@ Title_5_Object_4 = lightTab.Toggle({
 	Enabled = Lighting.GlobalShadows
 })
 
-Title_5_Object_5 = lightTab.Button({
+lightTab_No_Fog = lightTab.Button({
 	Text = "No Fog",
 	Callback = function(Value)
 		Lighting.FogEnd = 100000
@@ -1542,7 +1542,7 @@ Title_5_Object_5 = lightTab.Button({
 	}
 })
 
-Title_5_Object_6 = lightTab.Button({
+lightTab_Restore_Lighting = lightTab.Button({
 	Text = "Restore Lighting",
 	Callback = function(Value)
 		Lighting.Ambient = lightingVariables.origsettings.abt
@@ -1564,7 +1564,7 @@ Title_5_Object_6 = lightTab.Button({
 
 --// Server \\--
 
-Title_3_Object_1 = serverTab.Slider({
+serverTab_Min_Players = serverTab.Slider({
 	Text = "Min Players",
 	Callback = function(Value)
 		serverVariables.minimumPlayers = Value
@@ -1574,7 +1574,7 @@ Title_3_Object_1 = serverTab.Slider({
 	Def = 1
 })
 
-Title_3_Object_2 = serverTab.Slider({
+serverTab_Max_Players = serverTab.Slider({
 	Text = "Max Players",
 	Callback = function(Value)
 		serverVariables.maximumPlayers = Value
@@ -1584,7 +1584,7 @@ Title_3_Object_2 = serverTab.Slider({
 	Def = serverVariables.maximumPlayers
 })
 
-Title_3_Object_3 = serverTab.Button({
+serverTab_Server_Hop = serverTab.Button({
 	Text = "Server Hop",
 	Callback = function(Value)
 		ServerHop()
@@ -1598,7 +1598,7 @@ Title_3_Object_3 = serverTab.Button({
 	}
 })
 
-Title_3_Object_4 = serverTab.Button({
+serverTab_Rejoin = serverTab.Button({
 	Text = "Rejoin",
 	Callback = function(Value)
 		if #Players:GetPlayers() <= 1 then
@@ -1618,7 +1618,7 @@ Title_3_Object_4 = serverTab.Button({
 	}
 })
 
-Title_3_Object_5 = serverTab.Button({
+serverTab_Discord_Link = serverTab.Button({
 	Text = "Click to copy Discord link!",
 	Callback = function(Value)
 		setclipboard("https://discord.gg/WbqreSvspk")
@@ -1642,11 +1642,11 @@ Title_3_Object_5 = serverTab.Button({
 
 function GetList()
 	local Plr_List = getPlayers()
-	teleDropdown:SetOptions(Plr_List)
-	viewDropdown:SetOptions(Plr_List)
-	headsitDropdown:SetOptions(Plr_List)
-	bangDropdown:SetOptions(Plr_List)
-	facesitDropdown:SetOptions(Plr_List)
+	teleTab_Teleport_To_Dropdown:SetOptions(Plr_List)
+	teleTab_View_Dropdown:SetOptions(Plr_List)
+	teleTab_Headsit_Dropdown:SetOptions(Plr_List)
+	flyTab_Bang_Dropdown:SetOptions(Plr_List)
+	flyTab_Facesit_Dropdown:SetOptions(Plr_List)
 end
 
 function onDied()
