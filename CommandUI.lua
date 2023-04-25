@@ -19,6 +19,7 @@ local TeleportService = game:GetService('TeleportService')
 local TweenService = game:GetService('TweenService')
 local VirtualUser = game:GetService('VirtualUser')
 local HttpService = game:GetService('HttpService')
+local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService('RunService')
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
@@ -930,7 +931,7 @@ serverTab = MainGui.New({
 --// Player \\--
 
 Title_1_Object_1 = playerTab.Toggle({
-	Text = "Auto Shrink",
+	Text = "Auto Shrink (R15 Only)",
 	Callback = function(Value)
 		getgenv().settings.auto_Shrink = Value
 		saveSettings()
@@ -1612,6 +1613,26 @@ Title_3_Object_4 = serverTab.Button({
 		Info = function(self)
 			MainGui.Banner({
 				Text = "Rejoins the current server."
+			})
+		end
+	}
+})
+
+Title_3_Object_5 = serverTab.Button({
+	Text = "Click to copy Discord link!",
+	Callback = function(Value)
+		setclipboard("https://discord.gg/WbqreSvspk")
+		
+		StarterGui:SetCore("SendNotification", {
+			Title = "COPIED",
+			Text = "Invite link copied to clipboard!",
+			Duration = 5
+		})
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Copy my discord invite link to your clipboard. Paste it in your internet browser url bar to join my server."
 			})
 		end
 	}
