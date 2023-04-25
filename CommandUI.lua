@@ -13,6 +13,7 @@ if not game:IsLoaded() then
 end
 
 --// Services \\--
+
 local UserInputService = game:GetService('UserInputService')
 local TeleportService = game:GetService('TeleportService')
 local TweenService = game:GetService('TweenService')
@@ -902,33 +903,33 @@ MainGui = Material.Load({
 	Theme = "Dark"
 })
 
-Title_1 = MainGui.New({
+playerTab = MainGui.New({
 	Title = "Player"
 })
 
-Title_2 = MainGui.New({
+teleTab = MainGui.New({
 	Title = "Tele/Spy"
 })
 
-Title_3 = MainGui.New({
-	Title = "Server"
-})
-
-Title_4 = MainGui.New({
+flyTab = MainGui.New({
 	Title = "Fly/Perv"
 })
 
-Title_5 = MainGui.New({
+espTab = MainGui.New({
+	Title = "ESP"
+})
+
+lightTab = MainGui.New({
 	Title = "Lighting"
 })
 
-Title_6 = MainGui.New({
-	Title = "ESP"
+serverTab = MainGui.New({
+	Title = "Server"
 })
 
 --// Player \\--
 
-Title_1_Object_1 = Title_1.Toggle({
+Title_1_Object_1 = playerTab.Toggle({
 	Text = "Auto Shrink",
 	Callback = function(Value)
 		getgenv().settings.auto_Shrink = Value
@@ -940,7 +941,7 @@ Title_1_Object_1 = Title_1.Toggle({
 	Enabled = getgenv().settings.auto_Shrink
 })
 
-Title_1_Object_2 = Title_1.Toggle({
+Title_1_Object_2 = playerTab.Toggle({
 	Text = "Click Delete (Hold X)",
 	Callback = function(Value)
 		getgenv().settings.click_Delete = Value
@@ -949,7 +950,7 @@ Title_1_Object_2 = Title_1.Toggle({
 	Enabled = getgenv().settings.click_Delete
 })
 
-Title_1_Object_3 = Title_1.Toggle({
+Title_1_Object_3 = playerTab.Toggle({
 	Text = "Noclip",
 	Callback = function(Value)
 		if Value then
@@ -973,7 +974,42 @@ Title_1_Object_3 = Title_1.Toggle({
 	Enabled = false
 })
 
-Title_1_Object_4 = Title_1.Button({
+Title_1_Object_4 = playerTab.Toggle({
+	Text = "Spin",
+	Callback = function(Value)
+		if Value then
+			local Spin = Instance.new("BodyAngularVelocity")
+			Spin.Name = "Spinning"
+			Spin.Parent = getRoot(LocalPlayer.Character)
+			Spin.MaxTorque = Vector3.new(0, math.huge, 0)
+			Spin.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
+		elseif not Value and LocalPlayer.Character then
+			for i,v in pairs(getRoot(LocalPlayer.Character):GetChildren()) do
+				if v.Name == "Spinning" then
+					v:Destroy()
+				end
+			end
+		end
+	end,
+	Enabled = false
+})
+
+Title_1_Object_5 = playerTab.Slider({
+	Text = "Spin Speed",
+	Callback = function(Value)
+		playerVariables.spinSpeed = Value
+		for i,v in pairs(getRoot(LocalPlayer.Character):GetChildren()) do
+			if v.Name == "Spinning" then
+				v.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
+			end
+		end
+	end,
+	Min = 1,
+	Max = 100,
+	Def = 20
+})
+
+Title_1_Object_6 = playerTab.Button({
 	Text = "Lay",
 	Callback = function(Value)
 		local Human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
@@ -998,70 +1034,7 @@ Title_1_Object_4 = Title_1.Button({
 	}
 })
 
-Title_1_Object_5 = Title_1.Button({
-	Text = "Respawn",
-	Callback = function(Value)
-		respawn(LocalPlayer)
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Respawns you."
-			})
-		end
-	}
-})
-
-Title_1_Object_6 = Title_1.Button({
-	Text = "Refresh",
-	Callback = function(Value)
-		refresh(LocalPlayer)
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Respawns and brings you back to the same position."
-			})
-		end
-	}
-})
-
-Title_1_Object_7 = Title_1.Slider({
-	Text = "Spin Speed",
-	Callback = function(Value)
-		playerVariables.spinSpeed = Value
-		for i,v in pairs(getRoot(LocalPlayer.Character):GetChildren()) do
-			if v.Name == "Spinning" then
-				v.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
-			end
-		end
-	end,
-	Min = 1,
-	Max = 100,
-	Def = 20
-})
-
-Title_1_Object_8 = Title_1.Toggle({
-	Text = "Spin",
-	Callback = function(Value)
-		if Value then
-			local Spin = Instance.new("BodyAngularVelocity")
-			Spin.Name = "Spinning"
-			Spin.Parent = getRoot(LocalPlayer.Character)
-			Spin.MaxTorque = Vector3.new(0, math.huge, 0)
-			Spin.AngularVelocity = Vector3.new(0, playerVariables.spinSpeed, 0)
-		elseif not Value and LocalPlayer.Character then
-			for i,v in pairs(getRoot(LocalPlayer.Character):GetChildren()) do
-				if v.Name == "Spinning" then
-					v:Destroy()
-				end
-			end
-		end
-	end,
-	Enabled = false
-})
-
-Title_1_Object_9 = Title_1.Button({
+Title_1_Object_7 = playerTab.Button({
 	Text = "Split",
 	Callback = function(Value)
 		if r15(LocalPlayer) then
@@ -1080,9 +1053,37 @@ Title_1_Object_9 = Title_1.Button({
 	}
 })
 
+Title_1_Object_8 = playerTab.Button({
+	Text = "Respawn",
+	Callback = function(Value)
+		respawn(LocalPlayer)
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Respawns you."
+			})
+		end
+	}
+})
+
+Title_1_Object_9 = playerTab.Button({
+	Text = "Refresh",
+	Callback = function(Value)
+		refresh(LocalPlayer)
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Respawns and brings you back to the same position."
+			})
+		end
+	}
+})
+
 --// Teleport/Spy \\--
 
-telespyPlayerSearch = Title_2.TextField({
+telespyPlayerSearch = teleTab.TextField({
 	Text = "Player Search",
 	Callback = function(Value)
 		flypervPlayerSearch:SetText(Value)
@@ -1090,7 +1091,7 @@ telespyPlayerSearch = Title_2.TextField({
 	end
 })
 
-Title_2_Object_1 = Title_2.Toggle({
+Title_2_Object_1 = teleTab.Toggle({
 	Text = "Click Teleport (Hold L Ctrl/Shift)",
 	Callback = function(Value)
 		getgenv().settings.click_Tele = Value
@@ -1099,7 +1100,7 @@ Title_2_Object_1 = Title_2.Toggle({
 	Enabled = getgenv().settings.click_Tele
 })
 
-Title_2_Object_2 = Title_2.Button({
+Title_2_Object_2 = teleTab.Button({
 	Text = "Flashback",
 	Callback = function(Value)
 		if playerVariables.lastDeath then
@@ -1119,7 +1120,7 @@ Title_2_Object_2 = Title_2.Button({
 	}
 })
 
-Title_2_Object_3 = Title_2.Toggle({
+Title_2_Object_3 = teleTab.Toggle({
 	Text = "Loop Tele",
 	Callback = function(Value)
 		teleportVariables.loop_Tele = Value
@@ -1130,7 +1131,7 @@ Title_2_Object_3 = Title_2.Toggle({
 	Enabled = false
 })
 
-teleDropdown = Title_2.Dropdown({
+teleDropdown = teleTab.Dropdown({
 	Text = "Teleport To",
 	Callback = function(Value)
 		teleportVariables.target = Value
@@ -1139,7 +1140,7 @@ teleDropdown = Title_2.Dropdown({
 	Options = temp_List
 })
 
-Title_2_Object_5 = Title_2.Button({
+Title_2_Object_5 = teleTab.Button({
 	Text = "Unview",
 	Callback = function(Value)
 		StopFreecam()
@@ -1164,7 +1165,7 @@ Title_2_Object_5 = Title_2.Button({
 	}
 })
 
-viewDropdown = Title_2.Dropdown({
+viewDropdown = teleTab.Dropdown({
 	Text = "View",
 	Callback = function(Value)
 		StopFreecam()
@@ -1195,7 +1196,7 @@ viewDropdown = Title_2.Dropdown({
 	Options = temp_List
 })
 
-headsitDropdown = Title_2.Dropdown({
+headsitDropdown = teleTab.Dropdown({
 	Text = "Headsit",
 	Callback = function(Value)
 		local tPlr = getPlayerFromString(Value)
@@ -1218,65 +1219,9 @@ headsitDropdown = Title_2.Dropdown({
 	Options = temp_List
 })
 
---// Server \\--
-
-Title_3_Object_1 = Title_3.Slider({
-	Text = "Min Players",
-	Callback = function(Value)
-		serverVariables.minimumPlayers = Value
-	end,
-	Min = 1,
-	Max = serverVariables.maximumPlayers,
-	Def = 1
-})
-
-Title_3_Object_2 = Title_3.Slider({
-	Text = "Max Players",
-	Callback = function(Value)
-		serverVariables.maximumPlayers = Value
-	end,
-	Min = 1,
-	Max = serverVariables.maximumPlayers,
-	Def = serverVariables.maximumPlayers
-})
-
-Title_3_Object_3 = Title_3.Button({
-	Text = "Server Hop",
-	Callback = function(Value)
-		ServerHop()
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Hops to the first server that has between Min and Max amount of players."
-			})
-		end
-	}
-})
-
-Title_3_Object_4 = Title_3.Button({
-	Text = "Rejoin",
-	Callback = function(Value)
-		if #Players:GetPlayers() <= 1 then
-			LocalPlayer:Kick("\nRejoining...")
-			wait()
-			TeleportService:Teleport(game.PlaceId, LocalPlayer)
-		else
-			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-		end
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Rejoins the current server."
-			})
-		end
-	}
-})
-
 --// Fly/Perv \\--
 
-flypervPlayerSearch = Title_4.TextField({
+flypervPlayerSearch = flyTab.TextField({
 	Text = "Player Search",
 	Callback = function(Value)
 		telespyPlayerSearch:SetText(Value)
@@ -1284,99 +1229,7 @@ flypervPlayerSearch = Title_4.TextField({
 	end
 })
 
-Title_4_Object_1 = Title_4.Slider({
-	Text = "Fly Speed",
-	Callback = function(Value)
-		flyVariables.iyflyspeed = Value
-		flyVariables.vehicleflyspeed = Value
-	end,
-	Min = 1,
-	Max = 25,
-	Def = 1
-})
-
-Title_4_Object_2 = Title_4.Toggle({
-	Text = "Fly",
-	Callback = function(Value)
-		if Value then
-			NOFLY()
-			wait()
-			sFLY()
-		else
-			NOFLY()
-		end
-	end,
-	Enabled = false
-})
-
-Title_4_Object_3 = Title_4.Toggle({
-	Text = "Vehicle Fly",
-	Callback = function(Value)
-		if Value then
-			NOFLY()
-			wait()
-			sFLY(true)
-		else
-			NOFLY()
-		end
-	end,
-	Enabled = false
-})
-
-Title_4_Object_4 = Title_4.Toggle({
-	Text = "Q/E Fly",
-	Callback = function(Value)
-		flyVariables.QEfly = Value
-	end,
-	Enabled = flyVariables.QEfly
-})
-
-Title_4_Object_5 = Title_4.Button({
-	Text = "Unbang",
-	Callback = function(Value)
-		Unbang()
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Stops banging."
-			})
-		end
-	}
-})
-
-bangDropdown = Title_4.Dropdown({
-	Text = "Bang",
-	Callback = function(Value)
-		Bang(Value)
-	end,
-	Options = temp_List
-})
-
-facesitDropdown = Title_4.Dropdown({
-	Text = "Facesit",
-	Callback = function(Value)
-		local tPlr = getPlayerFromString(Value)
-		if tPlr then
-			if headSit then
-				headSit:Disconnect()
-			end
-			
-			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = true
-			
-			headSit = RunService.Heartbeat:Connect(function()
-				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit == true then
-					getRoot(LocalPlayer.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(180), 0) * CFramenew(0, 1.25, 1)
-				else
-					headSit:Disconnect()
-				end
-			end)
-		end
-	end,
-	Options = temp_List
-})
-
-Title_4_Object_8 = Title_4.Toggle({
+Title_4_Object_1 = flyTab.Toggle({
 	Text = "Swim",
 	Callback = function(Value)
 		if Value and LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid") then
@@ -1428,9 +1281,192 @@ Title_4_Object_8 = Title_4.Toggle({
 	Enabled = false
 })
 
+Title_4_Object_2 = flyTab.Toggle({
+	Text = "Fly",
+	Callback = function(Value)
+		if Value then
+			NOFLY()
+			wait()
+			sFLY()
+		else
+			NOFLY()
+		end
+	end,
+	Enabled = false
+})
+
+Title_4_Object_3 = flyTab.Toggle({
+	Text = "Vehicle Fly",
+	Callback = function(Value)
+		if Value then
+			NOFLY()
+			wait()
+			sFLY(true)
+		else
+			NOFLY()
+		end
+	end,
+	Enabled = false
+})
+
+Title_4_Object_4 = flyTab.Toggle({
+	Text = "Q/E Fly",
+	Callback = function(Value)
+		flyVariables.QEfly = Value
+	end,
+	Enabled = flyVariables.QEfly
+})
+
+Title_4_Object_5 = flyTab.Slider({
+	Text = "Fly Speed",
+	Callback = function(Value)
+		flyVariables.iyflyspeed = Value
+		flyVariables.vehicleflyspeed = Value
+	end,
+	Min = 1,
+	Max = 25,
+	Def = 1
+})
+
+Title_4_Object_6 = flyTab.Button({
+	Text = "Unbang",
+	Callback = function(Value)
+		Unbang()
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Stops banging."
+			})
+		end
+	}
+})
+
+bangDropdown = flyTab.Dropdown({
+	Text = "Bang",
+	Callback = function(Value)
+		Bang(Value)
+	end,
+	Options = temp_List
+})
+
+facesitDropdown = flyTab.Dropdown({
+	Text = "Facesit",
+	Callback = function(Value)
+		local tPlr = getPlayerFromString(Value)
+		if tPlr then
+			if headSit then
+				headSit:Disconnect()
+			end
+			
+			LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit = true
+			
+			headSit = RunService.Heartbeat:Connect(function()
+				if tPlr.Character ~= nil and getRoot(tPlr.Character) and getRoot(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Sit == true then
+					getRoot(LocalPlayer.Character).CFrame = getRoot(tPlr.Character).CFrame * CFrame.Angles(0, mathRad(180), 0) * CFramenew(0, 1.25, 1)
+				else
+					headSit:Disconnect()
+				end
+			end)
+		end
+	end,
+	Options = temp_List
+})
+
+--// ESP \\--
+
+Title_6_Object_1 = espTab.Toggle({
+	Text = "Body ESP",
+	Callback = function(Value)
+		espVariables.Body_ESP = Value
+	end,
+	Enabled = espVariables.Body_ESP
+})
+
+Title_6_Object_2 = espTab.Toggle({
+	Text = "Highlight ESP",
+	Callback = function(Value)
+		espVariables.Highlight_ESP = Value
+	end,
+	Enabled = espVariables.Highlight_ESP
+})
+
+Title_6_Object_3 = espTab.Toggle({
+	Text = "Box ESP",
+	Callback = function(Value)
+		espVariables.Box_ESP = Value
+	end,
+	Enabled = espVariables.Box_ESP
+})
+
+Title_6_Object_4 = espTab.Toggle({
+	Text = "Tracer ESP",
+	Callback = function(Value)
+		espVariables.Tracer_ESP = Value
+	end,
+	Enabled = espVariables.Tracer_ESP
+})
+
+Title_6_Object_5 = espTab.Toggle({
+	Text = "Show Info",
+	Callback = function(Value)
+		espVariables.Show_Info = Value
+	end,
+	Enabled = espVariables.Show_Info
+})
+
+Title_6_Object_6 = espTab.Toggle({
+	Text = "Hide Team",
+	Callback = function(Value)
+		espVariables.Hide_Team = Value
+	end,
+	Enabled = espVariables.Hide_Team
+})
+
+Title_6_Object_7 = espTab.Toggle({
+	Text = "Aimbot",
+	Callback = function(Value)
+		aimbotVariables.Aimbot = Value
+	end,
+	Enabled = aimbotVariables.Aimbot
+})
+
+Title_6_Object_8 = espTab.Toggle({
+	Text = "Team Check",
+	Callback = function(Value)
+		aimbotVariables.Team_Check = Value
+	end,
+	Enabled = aimbotVariables.Team_Check
+})
+
+Title_6_Object_9 = espTab.Toggle({
+	Text = "Wall Check",
+	Callback = function(Value)
+		aimbotVariables.Wall_Check = Value
+	end,
+	Enabled = aimbotVariables.Wall_Check
+})
+
+Title_6_Object_10 = espTab.Toggle({
+	Text = "Third Person",
+	Callback = function(Value)
+		aimbotVariables.Third_Person = Value
+	end,
+	Enabled = aimbotVariables.Third_Person
+})
+
+Title_6_Object_11 = espTab.Dropdown({
+	Text = "Target",
+	Default = aimbotVariables.LockPart,
+	Callback = function(Value)
+		aimbotVariables.LockPart = Value
+	end,
+	Options = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "LeftHand", "RightHand", "LeftLowerArm", "RightLowerArm", "LeftUpperArm", "RightUpperArm", "LeftFoot", "LeftLowerLeg", "UpperTorso", "LeftUpperLeg", "RightFoot", "RightLowerLeg", "LowerTorso", "RightUpperLeg"}
+})
+
 --// Lighting \\--
 
-Title_5_Object_1 = Title_5.Button({
+Title_5_Object_1 = lightTab.Button({
 	Text = "Fullbright",
 	Callback = function(Value)
 		Lighting.Brightness = 2
@@ -1448,64 +1484,7 @@ Title_5_Object_1 = Title_5.Button({
 	}
 })
 
-Title_5_Object_2 = Title_5.Slider({
-	Text = "Set Time",
-	Callback = function(Value)
-		Lighting.ClockTime = Value
-	end,
-	Min = 1,
-	Max = 24,
-	Def = Lighting.ClockTime
-})
-
-Title_5_Object_3 = Title_5.Button({
-	Text = "No Fog",
-	Callback = function(Value)
-		Lighting.FogEnd = 100000
-		for i,v in pairs(Lighting:GetDescendants()) do
-			if v:IsA("Atmosphere") then
-				v:Destroy()
-			end
-		end
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Gets rid of fog."
-			})
-		end
-	}
-})
-
-Title_5_Object_4 = Title_5.Toggle({
-	Text = "Global Shadows",
-	Callback = function(Value)
-		Lighting.GlobalShadows = Value
-	end,
-	Enabled = Lighting.GlobalShadows
-})
-
-Title_5_Object_5 = Title_5.Button({
-	Text = "Restore Lighting",
-	Callback = function(Value)
-		Lighting.Ambient = lightingVariables.origsettings.abt
-		Lighting.OutdoorAmbient = lightingVariables.origsettings.oabt
-		Lighting.Brightness = lightingVariables.origsettings.brt
-		Lighting.ClockTime = lightingVariables.origsettings.time
-		Lighting.FogEnd = lightingVariables.origsettings.fe
-		Lighting.FogStart = lightingVariables.origsettings.fs
-		Lighting.GlobalShadows = lightingVariables.origsettings.gs
-	end,
-	Menu = {
-		Info = function(self)
-			MainGui.Banner({
-				Text = "Returns lighting to its original state."
-			})
-		end
-	}
-})
-
-Title_5_Object_6 = Title_5.Toggle({
+Title_5_Object_2 = lightTab.Toggle({
 	Text = "Fullbright Loop",
 	Callback = function(Value)
 		if Value then
@@ -1525,101 +1504,123 @@ Title_5_Object_6 = Title_5.Toggle({
 	Enabled = false
 })
 
---// ESP \\--
-
-Title_6_Object_1 = Title_6.Toggle({
-	Text = "Body ESP",
+Title_5_Object_3 = lightTab.Slider({
+	Text = "Set Time",
 	Callback = function(Value)
-		espVariables.Body_ESP = Value
+		Lighting.ClockTime = Value
 	end,
-	Enabled = espVariables.Body_ESP
+	Min = 1,
+	Max = 24,
+	Def = Lighting.ClockTime
 })
 
-Title_6_Object_2 = Title_6.Toggle({
-	Text = "Highlight ESP",
+Title_5_Object_4 = lightTab.Toggle({
+	Text = "Global Shadows",
 	Callback = function(Value)
-		espVariables.Highlight_ESP = Value
+		Lighting.GlobalShadows = Value
 	end,
-	Enabled = espVariables.Highlight_ESP
+	Enabled = Lighting.GlobalShadows
 })
 
-Title_6_Object_3 = Title_6.Toggle({
-	Text = "Box ESP",
+Title_5_Object_5 = lightTab.Button({
+	Text = "No Fog",
 	Callback = function(Value)
-		espVariables.Box_ESP = Value
+		Lighting.FogEnd = 100000
+		for i,v in pairs(Lighting:GetDescendants()) do
+			if v:IsA("Atmosphere") then
+				v:Destroy()
+			end
+		end
 	end,
-	Enabled = espVariables.Box_ESP
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Gets rid of fog."
+			})
+		end
+	}
 })
 
-Title_6_Object_4 = Title_6.Toggle({
-	Text = "Tracer ESP",
+Title_5_Object_6 = lightTab.Button({
+	Text = "Restore Lighting",
 	Callback = function(Value)
-		espVariables.Tracer_ESP = Value
+		Lighting.Ambient = lightingVariables.origsettings.abt
+		Lighting.OutdoorAmbient = lightingVariables.origsettings.oabt
+		Lighting.Brightness = lightingVariables.origsettings.brt
+		Lighting.ClockTime = lightingVariables.origsettings.time
+		Lighting.FogEnd = lightingVariables.origsettings.fe
+		Lighting.FogStart = lightingVariables.origsettings.fs
+		Lighting.GlobalShadows = lightingVariables.origsettings.gs
 	end,
-	Enabled = espVariables.Tracer_ESP
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Returns lighting to its original state."
+			})
+		end
+	}
 })
 
-Title_6_Object_5 = Title_6.Toggle({
-	Text = "Show Info",
+--// Server \\--
+
+Title_3_Object_1 = serverTab.Slider({
+	Text = "Min Players",
 	Callback = function(Value)
-		espVariables.Show_Info = Value
+		serverVariables.minimumPlayers = Value
 	end,
-	Enabled = espVariables.Show_Info
+	Min = 1,
+	Max = serverVariables.maximumPlayers,
+	Def = 1
 })
 
-Title_6_Object_6 = Title_6.Toggle({
-	Text = "Hide Team",
+Title_3_Object_2 = serverTab.Slider({
+	Text = "Max Players",
 	Callback = function(Value)
-		espVariables.Hide_Team = Value
+		serverVariables.maximumPlayers = Value
 	end,
-	Enabled = espVariables.Hide_Team
+	Min = 1,
+	Max = serverVariables.maximumPlayers,
+	Def = serverVariables.maximumPlayers
 })
 
-Title_6_Object_7 = Title_6.Toggle({
-	Text = "Aimbot",
+Title_3_Object_3 = serverTab.Button({
+	Text = "Server Hop",
 	Callback = function(Value)
-		aimbotVariables.Aimbot = Value
+		ServerHop()
 	end,
-	Enabled = aimbotVariables.Aimbot
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Hops to the first server that has between Min and Max amount of players."
+			})
+		end
+	}
 })
 
-Title_6_Object_8 = Title_6.Toggle({
-	Text = "Team Check",
+Title_3_Object_4 = serverTab.Button({
+	Text = "Rejoin",
 	Callback = function(Value)
-		aimbotVariables.Team_Check = Value
+		if #Players:GetPlayers() <= 1 then
+			LocalPlayer:Kick("\nRejoining...")
+			wait()
+			TeleportService:Teleport(game.PlaceId, LocalPlayer)
+		else
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+		end
 	end,
-	Enabled = aimbotVariables.Team_Check
-})
-
-Title_6_Object_9 = Title_6.Toggle({
-	Text = "Wall Check",
-	Callback = function(Value)
-		aimbotVariables.Wall_Check = Value
-	end,
-	Enabled = aimbotVariables.Wall_Check
-})
-
-Title_6_Object_10 = Title_6.Toggle({
-	Text = "Third Person",
-	Callback = function(Value)
-		aimbotVariables.Third_Person = Value
-	end,
-	Enabled = aimbotVariables.Third_Person
-})
-
-Title_6_Object_11 = Title_6.Dropdown({
-	Text = "Target",
-	Default = aimbotVariables.LockPart,
-	Callback = function(Value)
-		aimbotVariables.LockPart = Value
-	end,
-	Options = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "LeftHand", "RightHand", "LeftLowerArm", "RightLowerArm", "LeftUpperArm", "RightUpperArm", "LeftFoot", "LeftLowerLeg", "UpperTorso", "LeftUpperLeg", "RightFoot", "RightLowerLeg", "LowerTorso", "RightUpperLeg"}
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Rejoins the current server."
+			})
+		end
+	}
 })
 
 --// Player List Update \\--
 
-function GetList(obj)
-	local Plr_List = getPlayers(obj)
+function GetList()
+	local Plr_List = getPlayers()
 	teleDropdown:SetOptions(Plr_List)
 	viewDropdown:SetOptions(Plr_List)
 	headsitDropdown:SetOptions(Plr_List)
