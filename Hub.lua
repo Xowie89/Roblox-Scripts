@@ -13,7 +13,7 @@ elseif game.PlaceId == 6769764667 then
 elseif game.PlaceId == 5736409216 then
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/Xowie89/Roblox-Scripts/main/Mall%20Tycoon.lua"))()
 -- Item Factory
-elseif game.PlaceId == 7280506312 then
+elseif game.PlaceId == 7280506312 or game.PlaceId == 8384895168 then
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/Xowie89/Roblox-Scripts/main/Item%20Factory.lua"))()
 else
 	StarterGui:SetCore("SendNotification", {
