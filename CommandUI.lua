@@ -156,8 +156,8 @@ if isfile("CommandUISettings.txt") then
 	getgenv().settings = HttpService:JSONDecode(readfile('CommandUISettings.txt'))
 end
 
-local sNames = {"auto_Shrink", "click_Tele", "click_Delete"}
-local sValues = {false, false, false}
+local sNames = {"auto_Shrink", "click_Tele", "click_Delete", "Hide_KeyBind"}
+local sValues = {false, false, false, "RightShift"}
 
 if #getgenv().settings ~= sNames then
 	for i, v in ipairs(sNames) do
@@ -934,23 +934,12 @@ local function Load()
 	end)
 end
 
---// Show/Hide UI \\--
-
-UserInputService.InputBegan:Connect(function(input, GP)
-	if input.KeyCode == Enum.KeyCode.RightShift then
-		local UI = COREGUI:FindFirstChild("Command UI (RShift to show/hide)")
-		if UI then
-			UI.Enabled = not UI.Enabled
-		end
-	end
-end)
-
 --// UI \\--
 
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xowie89/MaterialLua/master/Module.lua"))()
 
 MainGui = Material.Load({
-	Title = "Command UI (RShift to show/hide)",
+	Title = "Command UI",
 	Style = 1,
 	SizeX = 400,
 	SizeY = 500,
@@ -1685,11 +1674,47 @@ serverTab_Discord_Link = serverTab.Button({
 	Menu = {
 		Info = function(self)
 			MainGui.Banner({
-				Text = "Copy my discord invite link to your clipboard. Paste it in your internet browser url bar to join my server."
+				Text = "Copy my discord invite link to your clipboard. Paste it in your internet browser url bar or in the discord join tab to join my server.."
 			})
 		end
 	}
 })
+
+serverTab_Set_Hide_KeyBind = serverTab.Button({
+	Text = "Show/Hide UI: "..tostring(getgenv().settings.Hide_KeyBind),
+	Callback = function(Value)
+		serverTab_Set_Hide_KeyBind:SetText("Input new keybind")
+	end,
+	Menu = {
+		Info = function(self)
+			MainGui.Banner({
+				Text = "Set the keybind to show/hide the UI."
+			})
+		end
+	}
+})
+
+--// Show/Hide UI \\--
+
+UserInputService.InputBegan:Connect(function(input, GP)
+	if input.KeyCode == Enum.KeyCode[getgenv().settings.Hide_KeyBind] and serverTab_Set_Hide_KeyBind:GetText() ~= "Input new keybind" then
+		local UI = COREGUI:FindFirstChild("Command UI")
+		if UI then
+			UI.Enabled = not UI.Enabled
+		else
+			for _,v in pairs(COREGUI:GetChildren()) do
+				UI = v:FindFirstChild("Command UI")
+				if UI then
+					UI.Enabled = not UI.Enabled
+				end
+			end
+		end
+	elseif serverTab_Set_Hide_KeyBind:GetText() == "Input new keybind" and input.KeyCode ~= Enum.KeyCode.Unknown then
+		serverTab_Set_Hide_KeyBind:SetText("Show/Hide UI: "..input.KeyCode.Name)
+		getgenv().settings.Hide_KeyBind = input.KeyCode.Name
+		saveSettings()
+	end
+end)
 
 --// Character Died \\--
 
