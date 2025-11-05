@@ -141,21 +141,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 MIT License - Copyright (c) 2023 Xowie89
 ```
 
-## 💬 Discord
-
-Join our Discord community for support, updates, and discussions:
-
-**Discord Server**: `https://discord.gg/WbqreSvspk`
-
-### Discord Features
-- Script support and troubleshooting
-- Feature requests and suggestions
-- Community discussions
-- Early access to new scripts
-- Direct contact with developers
-
----
-
 ## 🔧 Technical Details
 
 ### Requirements
